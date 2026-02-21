@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SimPréstamos — Reporte Simulaciones</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --v:#00e5b0;--v2:#00c49a;--v3:rgba(0,229,176,.08);
+  --a:#0f4c81;--a2:#1a6db5;--a3:rgba(15,76,129,.15);
+  --bg:#07101e;--bg2:#0c1d30;--bg3:#102038;--bg4:#152844;
+  --bd:#1e3a58;--bd2:rgba(30,58,88,.6);
+  --tx:#a8c8e8;--wh:#e8f4ff;
+  --rd:#ff4d6d;--am:#ffc107;--wa:#25d366;
+  --r:14px;--r2:10px;--r3:8px;
+  --sh:0 8px 32px rgba(0,0,0,.45);
+  --tr:.2s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);color:var(--tx);
+  min-height:100vh;overflow-x:hidden;
+  padding-bottom:30px;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 50% at 0% 0%,rgba(0,229,176,.06) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 100%,rgba(15,76,129,.1) 0%,transparent 60%);
+}
+
+/* TOPBAR */
+.topbar{
+  position:sticky;top:0;z-index:300;
+  background:rgba(7,16,30,.97);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;gap:10px;
+  padding:0 16px;height:56px;
+}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:var(--v);flex:1}
+.logo span{color:var(--wh)}
+.logo small{font-size:.65rem;color:var(--tx);font-family:'DM Sans',sans-serif;font-weight:400;display:block;opacity:.7;margin-top:-2px}
+
+/* APP */
+.app{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:16px 12px}
+
+/* CARD */
+.card{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);padding:16px;box-shadow:var(--sh);margin-bottom:14px}
+.card-titulo{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:var(--wh);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-titulo::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--bd),transparent)}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.stat-card{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r2);padding:12px 8px;text-align:center}
+.stat-card .st-ico{font-size:1.2rem;margin-bottom:4px}
+.stat-card .st-num{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--wh);line-height:1}
+.stat-card .st-lbl{font-size:.58rem;color:var(--tx);opacity:.65;margin-top:3px;text-transform:uppercase;letter-spacing:.04em}
+
+/* SEARCH */
+.search-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.search-input{flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:var(--r3);color:var(--wh);font-family:'DM Sans',sans-serif;font-size:.88rem;padding:10px 13px;outline:none}
+.search-input:focus{border-color:var(--v)}
+.search-select{background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:var(--r3);color:var(--wh);font-family:'DM Sans',sans-serif;font-size:.82rem;padding:10px;outline:none;-webkit-appearance:none}
+.search-select option{background:var(--bg3)}
+
+/* BOTONES */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;border:none;cursor:pointer;transition:all var(--tr);white-space:nowrap;min-height:42px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--v),var(--v2));color:var(--bg)}
+.btn-primary:hover:not(:disabled){box-shadow:0 6px 20px rgba(0,229,176,.3)}
+.btn-azul{background:linear-gradient(135deg,var(--a),var(--a2));color:#fff}
+.btn-azul:hover:not(:disabled){box-shadow:0 6px 20px rgba(15,76,129,.35)}
+.btn-wa{background:linear-gradient(135deg,#25d366,#1ebe5d);color:#fff}
+.btn-wa:hover:not(:disabled){box-shadow:0 6px 20px rgba(37,211,102,.35)}
+.btn-ghost{background:rgba(255,255,255,.06);border:1px solid var(--bd);color:var(--tx)}
+.btn-ghost:hover:not(:disabled){background:rgba(255,255,255,.1);color:var(--wh)}
+.btn-rojo{background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.3);color:var(--rd)}
+.btn-sm{padding:8px 13px;font-size:.78rem;min-height:36px}
+.btn-full{width:100%}
+.fila-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* TABLA */
+.tabla-wrap{overflow-x:auto;border-radius:var(--r2);border:1px solid var(--bd);margin-bottom:14px}
+table{width:100%;border-collapse:collapse;min-width:700px}
+thead tr{background:var(--a);position:sticky;top:0;z-index:2}
+thead th{padding:10px 12px;text-align:left;font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+thead th:first-child{width:40px;text-align:center}
+tbody tr{border-bottom:1px solid var(--bd2);transition:background var(--tr)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(0,229,176,.04)}
+tbody tr.sel{background:rgba(0,229,176,.08);border-left:3px solid var(--v)}
+tbody td{padding:9px 12px;font-size:.83rem;color:var(--tx);white-space:nowrap}
+tbody td:first-child{text-align:center}
+tbody td.nombre{color:var(--wh);font-weight:600}
+tbody td.verde{color:var(--v);font-weight:700}
+tbody td.amarillo{color:var(--am);font-weight:700}
+
+/* CHECKBOX custom */
+.cb{width:16px;height:16px;accent-color:var(--v);cursor:pointer}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:.67rem;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.badge-ok{background:rgba(0,229,176,.12);border:1px solid rgba(0,229,176,.28);color:var(--v)}
+.badge-p{background:rgba(255,193,7,.12);border:1px solid rgba(255,193,7,.3);color:var(--am)}
+.badge-rd{background:rgba(255,77,109,.12);border:1px solid rgba(255,77,109,.3);color:var(--rd)}
+
+/* RESUMEN SELECCIÓN */
+.resumen-bar{
+  background:var(--a3);border:1px solid rgba(26,109,181,.3);border-radius:var(--r2);
+  padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.resumen-bar .rb-item{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:70px}
+.resumen-bar .rb-val{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--wh)}
+.resumen-bar .rb-lbl{font-size:.6rem;color:var(--tx);opacity:.65;text-transform:uppercase;letter-spacing:.05em}
+.resumen-bar .rb-sep{width:1px;height:36px;background:var(--bd);margin:0 4px}
+
+/* PANEL WA */
+.wa-panel{background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.2);border-radius:var(--r2);padding:16px}
+.wa-titulo{font-size:.78rem;font-weight:700;color:var(--wa);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.campo{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.campo label{font-size:.7rem;font-weight:700;color:var(--v);text-transform:uppercase;letter-spacing:.07em}
+.campo input,.campo textarea{background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:var(--r3);color:var(--wh);font-family:'DM Sans',sans-serif;font-size:.92rem;padding:10px 12px;outline:none;width:100%;transition:border-color var(--tr)}
+.campo input:focus,.campo textarea:focus{border-color:var(--v)}
+.campo textarea{resize:vertical;min-height:100px;font-size:.82rem;line-height:1.5}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px;color:var(--tx);opacity:.4}
+.empty .ico{font-size:2.4rem;margin-bottom:10px}
+.empty p{font-size:.88rem}
+
+/* TOAST */
+#toast-container{position:fixed;bottom:24px;right:12px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+.toast{background:var(--bg4);border:1px solid var(--bd);border-radius:var(--r2);padding:11px 14px;display:flex;align-items:center;gap:9px;animation:toastIn .28s ease;box-shadow:0 8px 28px rgba(0,0,0,.5);font-size:.84rem}
+.toast.ok{border-left:3px solid var(--v)}
+.toast.err{border-left:3px solid var(--rd)}
+.toast.inf{border-left:3px solid var(--am)}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.15);border-top-color:var(--v);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+.sep{height:1px;background:var(--bd);margin:14px 0}
+
+/* ALERTA */
+.alerta{border-radius:var(--r2);padding:10px 13px;font-size:.81rem;display:flex;align-items:flex-start;gap:9px;margin-bottom:12px}
+.alerta-info{background:rgba(26,109,181,.1);border:1px solid rgba(26,109,181,.25);color:#7ab8f5}
+.alerta-ok{background:rgba(0,229,176,.08);border:1px solid rgba(0,229,176,.22);color:var(--v)}
+
+/* SELECCIONAR TODO */
+.sel-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.sel-bar span{font-size:.78rem;color:var(--tx)}
+
+@media(min-width:600px){.app{max-width:960px}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    Sim<span>Préstamos</span>
+    <small>Consulta General de Simulaciones</small>
+  </div>
+  <button class="btn btn-ghost btn-sm" onclick="history.back()">← Volver</button>
+</div>
+
+<div class="app">
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card"><div class="st-ico">📊</div><div class="st-num" id="st-total">—</div><div class="st-lbl">Total</div></div>
+    <div class="stat-card"><div class="st-ico">☑️</div><div class="st-num" id="st-sel">0</div><div class="st-lbl">Selec.</div></div>
+    <div class="stat-card"><div class="st-ico">💵</div><div class="st-num" id="st-capital">—</div><div class="st-lbl">Capital sel.</div></div>
+    <div class="stat-card"><div class="st-ico">💰</div><div class="st-num" id="st-total-sel">—</div><div class="st-lbl">Total sel.</div></div>
+  </div>
+
+  <!-- CARGA Y FILTROS -->
+  <div class="card">
+    <div class="card-titulo">📋 Simulaciones</div>
+
+    <div class="search-bar">
+      <input class="search-input" id="filtro" placeholder="🔍 Buscar nombre, teléfono, ID..." oninput="filtrar()">
+      <select class="search-select" id="filtro-estado" onchange="filtrar()">
+        <option value="">Todos</option>
+        <option value="Completo">✅ Completo</option>
+        <option value="Nuevo">⚠️ Nuevo</option>
+        <option value="Pendiente">⏳ Pendiente</option>
+      </select>
+      <button class="btn btn-azul btn-sm" onclick="cargar()">🔄 Cargar</button>
+    </div>
+
+    <!-- BARRA SELECCIÓN -->
+    <div class="sel-bar">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem;color:var(--wh)">
+        <input type="checkbox" class="cb" id="cb-todos" onchange="toggleTodos(this.checked)">
+        Seleccionar todos
+      </label>
+      <span id="sel-count-lbl" style="color:var(--v);font-weight:600"></span>
+      <button class="btn btn-ghost btn-sm" onclick="limpiarSel()">✕ Limpiar selección</button>
+    </div>
+
+    <!-- TABLA -->
+    <div class="tabla-wrap" id="tabla-wrap">
+      <div class="empty"><div class="ico">📊</div><p>Presiona 🔄 Cargar para ver simulaciones</p></div>
+    </div>
+  </div>
+
+  <!-- RESUMEN SELECCIÓN -->
+  <div class="resumen-bar" id="resumen-bar" style="display:none">
+    <div class="rb-item"><div class="rb-val" id="rb-n">0</div><div class="rb-lbl">Filas sel.</div></div>
+    <div class="rb-sep"></div>
+    <div class="rb-item"><div class="rb-val" id="rb-cap">$0</div><div class="rb-lbl">Σ Capital</div></div>
+    <div class="rb-sep"></div>
+    <div class="rb-item"><div class="rb-val" id="rb-tot">$0</div><div class="rb-lbl">Σ Total</div></div>
+    <div class="rb-sep"></div>
+    <div class="rb-item"><div class="rb-val" id="rb-pago">$0</div><div class="rb-lbl">Σ Pago diario</div></div>
+    <div class="rb-sep"></div>
+    <div class="rb-item"><div class="rb-val" id="rb-dias">0</div><div class="rb-lbl">Días prom.</div></div>
+  </div>
+
+  <!-- EXPORTAR + WHATSAPP -->
+  <div class="card">
+    <div class="card-titulo">📤 Exportar y Enviar</div>
+
+    <div class="alerta alerta-info">
+      <span>ℹ️</span>
+      <div>Selecciona las filas de la tabla, completa los datos y descarga el reporte. Luego envía el link de descarga por WhatsApp al contacto que elijas.</div>
+    </div>
+
+    <!-- NOMBRE REPORTE -->
+    <div class="g2" style="margin-bottom:12px">
+      <div class="campo">
+        <label>📄 Nombre del reporte</label>
+        <input type="text" id="rep-nombre" value="Reporte_Simulaciones" placeholder="Reporte_Simulaciones">
+      </div>
+      <div class="campo">
+        <label>🗓️ Período / Descripción</label>
+        <input type="text" id="rep-periodo" placeholder="Ej: Febrero 2026 — Zona Norte">
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full" id="btn-exportar" onclick="exportarXLSX()" disabled>
+      ⬇️ Descargar Reporte .xlsx
+    </button>
+
+    <div class="sep"></div>
+
+    <!-- PANEL WHATSAPP -->
+    <div class="wa-panel">
+      <div class="wa-titulo">📱 Enviar por WhatsApp</div>
+
+      <div class="alerta alerta-ok" style="margin-bottom:12px">
+        <span>💡</span>
+        <div>Primero descarga el archivo, luego envía el mensaje con el link para que el contacto lo descargue desde su dispositivo.</div>
+      </div>
+
+      <div class="g2">
+        <div class="campo">
+          <label>Nombre del contacto</label>
+          <input type="text" id="wa-nombre" placeholder="Ej: Gerente Ventas">
+        </div>
+        <div class="campo">
+          <label>Teléfono WhatsApp</label>
+          <input type="tel" id="wa-tel" placeholder="4421234567">
+        </div>
+      </div>
+
+      <div class="campo">
+        <label>Mensaje personalizado</label>
+        <textarea id="wa-msg" rows="6"></textarea>
+      </div>
+
+      <div class="fila-btns">
+        <button class="btn btn-ghost btn-sm" onclick="generarMensaje()">🔄 Generar mensaje</button>
+        <button class="btn btn-wa" onclick="enviarWA()" style="flex:1">📱 Abrir WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<div id="toast-container"></div>
+
+<!-- SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw83md07bzx1UmGRn51i-pRiuvQaEig_mUWS4VjvO0yTIlDCULqT8p3NGsSe2S4nZhzjA/exec';
+
+let todasSims   = [];
+let simsFiltradas = [];
+let seleccionadas = new Set(); // IDs seleccionados
+let archivoNombre = '';
+
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
+function g(id){ return document.getElementById(id) }
+function fmt(n){
+  if(n===null||n===undefined||n==='') return '—';
+  const num = Number(n);
+  if(isNaN(num)) return '—';
+  return '$'+num.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function fmtFecha(s){
+  if(!s) return '—';
+  const d = new Date(s);
+  if(isNaN(d)) return String(s).slice(0,16);
+  return d.toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'});
+}
+function formatTel(tel){
+  const t = String(tel||'').replace(/\D/g,'');
+  return t.length===10?'52'+t:t;
+}
+
+function toast(msg,tipo='ok',dur=3500){
+  const c=g('toast-container');
+  const t=document.createElement('div');
+  const ico=tipo==='ok'?'✅':tipo==='err'?'❌':'ℹ️';
+  t.className=`toast ${tipo}`;
+  t.innerHTML=`<span>${ico}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>t.style.opacity='0',dur-400);
+  setTimeout(()=>t.remove(),dur);
+}
+
+function badge(estado){
+  const m={'Completo':['badge-ok','✅'],'Nuevo':['badge-p','⚠️'],'Pendiente':['badge-p','⏳'],'Activo':['badge-ok','✅'],'Inactivo':['badge-rd','❌']};
+  const [cls,ico]=m[estado]||['badge-p','⏳'];
+  return `<span class="badge ${cls}">${ico} ${estado||'—'}</span>`;
+}
+
+// ══════════════════════════════════════════════
+// CARGAR SIMULACIONES
+// ══════════════════════════════════════════════
+async function cargar(){
+  const wrap = g('tabla-wrap');
+  wrap.innerHTML = `<div class="empty"><div class="spinner"></div><p style="margin-top:12px">Conectando con Google Sheets...</p></div>`;
+  g('st-total').textContent = '…';
+
+  try{
+    const r = await fetch(`${GAS_URL}?tipo=simulaciones`,{redirect:'follow'});
+    const d = await r.json();
+
+    if(d?.success && d.data?.simulaciones?.length){
+      todasSims = d.data.simulaciones.map(s=>({
+        id:       s[0], idCliente: s[1], fechaHora: s[2],
+        nombre:   s[3], telefono:  s[4], capital:   s[5],
+        dias:     s[6], interesPorc: s[7], interesTotal: s[8],
+        total:    s[9], pagoDiario: s[10],
+        latitud:  s[11],longitud:  s[12], ubicacion: s[13],
+        estado:   String(s[17]||'').replace(/[✅❌⚠️]\s*/,''),
+        notas:    s[18], correo:    s[19],
+      }));
+      toast(`✅ ${todasSims.length} simulaciones cargadas`,'ok');
+    } else {
+      // Fallback a clientes
+      const rc = await fetch(`${GAS_URL}?tipo=clientes`,{redirect:'follow'});
+      const dc = await rc.json();
+      if(dc?.success){
+        todasSims = (dc.data?.clientes||[]).map(c=>({
+          id: c.idCliente, idCliente: c.idCliente,
+          fechaHora: c.ultimaInteraccion||c.fechaRegistro,
+          nombre: c.nombreCliente, telefono: c.telefono,
+          correo: c.correo, capital:'', dias:'', interesPorc:'',
+          interesTotal:'', total:'', pagoDiario:'',
+          estado: String(c.estado||'Activo').replace(/[✅❌]\s*/,''),
+          notas: `${c.cantidadSimulaciones||0} simulaciones`,
+        }));
+        toast(`${todasSims.length} clientes cargados (sin datos de cálculo)`,'inf',4000);
+      } else {
+        throw new Error('Sin datos');
+      }
+    }
+  } catch(e){
+    wrap.innerHTML = `<div class="empty"><div class="ico">⚠️</div><p>No se pudo conectar. Verifica la URL del AppScript.</p></div>`;
+    toast('Error de conexión','err');
+    return;
+  }
+
+  seleccionadas.clear();
+  g('st-total').textContent = todasSims.length;
+  filtrar();
+  actualizarStats();
+}
+
+// ══════════════════════════════════════════════
+// FILTRAR
+// ══════════════════════════════════════════════
+function filtrar(){
+  const q   = g('filtro').value.toLowerCase();
+  const est = g('filtro-estado').value;
+  simsFiltradas = todasSims.filter(s=>{
+    const txt = `${s.id} ${s.nombre} ${s.telefono} ${s.idCliente} ${s.correo}`.toLowerCase();
+    return (!q||txt.includes(q)) && (!est||s.estado===est);
+  });
+  renderTabla();
+}
+
+// ══════════════════════════════════════════════
+// RENDER TABLA
+// ══════════════════════════════════════════════
+function renderTabla(){
+  const wrap = g('tabla-wrap');
+  if(!simsFiltradas.length){
+    wrap.innerHTML = `<div class="empty"><div class="ico">📭</div><p>Sin resultados</p></div>`;
+    return;
+  }
+
+  const filas = simsFiltradas.map(s=>{
+    const checked = seleccionadas.has(s.id) ? 'checked' : '';
+    const selCls  = seleccionadas.has(s.id) ? 'sel' : '';
+    return `<tr class="${selCls}" id="tr-${s.id}" onclick="toggleFila('${s.id}')">
+      <td onclick="event.stopPropagation()">
+        <input type="checkbox" class="cb" id="cb-${s.id}" ${checked} onchange="toggleFila('${s.id}')">
+      </td>
+      <td class="nombre">${s.nombre||'—'}</td>
+      <td>${s.telefono||'—'}</td>
+      <td style="font-size:.75rem;color:var(--tx)">${fmtFecha(s.fechaHora)}</td>
+      <td class="verde">${s.capital?fmt(s.capital):'—'}</td>
+      <td>${s.dias?s.dias+'d':'—'}</td>
+      <td>${s.interesPorc?s.interesPorc+'%':'—'}</td>
+      <td class="amarillo">${s.pagoDiario?fmt(s.pagoDiario):'—'}</td>
+      <td class="verde" style="font-size:.88rem">${s.total?fmt(s.total):'—'}</td>
+      <td>${badge(s.estado)}</td>
+      <td style="font-size:.73rem;max-width:120px;overflow:hidden;text-overflow:ellipsis">${s.notas||'—'}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>☑</th>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th>Fecha</th>
+          <th>Capital</th>
+          <th>Días</th>
+          <th>Interés%</th>
+          <th>Pago/día</th>
+          <th>Total</th>
+          <th>Estado</th>
+          <th>Notas</th>
+        </tr>
+      </thead>
+      <tbody>${filas}</tbody>
+    </table>`;
+
+  actualizarStats();
+}
+
+// ══════════════════════════════════════════════
+// SELECCIÓN
+// ══════════════════════════════════════════════
+function toggleFila(id){
+  if(seleccionadas.has(id)) seleccionadas.delete(id);
+  else seleccionadas.add(id);
+
+  const tr = g(`tr-${id}`);
+  const cb = g(`cb-${id}`);
+  if(tr) tr.classList.toggle('sel', seleccionadas.has(id));
+  if(cb) cb.checked = seleccionadas.has(id);
+
+  actualizarStats();
+}
+
+function toggleTodos(checked){
+  simsFiltradas.forEach(s=>{
+    if(checked) seleccionadas.add(s.id);
+    else seleccionadas.delete(s.id);
+  });
+  renderTabla();
+  g('cb-todos').checked = checked;
+}
+
+function limpiarSel(){
+  seleccionadas.clear();
+  g('cb-todos').checked = false;
+  renderTabla();
+}
+
+function getSeleccionadas(){
+  return todasSims.filter(s=>seleccionadas.has(s.id));
+}
+
+// ══════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════
+function actualizarStats(){
+  const sel = getSeleccionadas();
+  const n   = sel.length;
+
+  const sumCap  = sel.reduce((a,s)=>a+(Number(s.capital)||0),0);
+  const sumTot  = sel.reduce((a,s)=>a+(Number(s.total)||0),0);
+  const sumPago = sel.reduce((a,s)=>a+(Number(s.pagoDiario)||0),0);
+  const promDias= n ? Math.round(sel.reduce((a,s)=>a+(Number(s.dias)||0),0)/n) : 0;
+
+  g('st-sel').textContent       = n;
+  g('st-capital').textContent   = n ? fmt(sumCap)  : '—';
+  g('st-total-sel').textContent = n ? fmt(sumTot)  : '—';
+
+  const lbl = n ? `${n} fila${n>1?'s':''} seleccionada${n>1?'s':''}` : '';
+  g('sel-count-lbl').textContent = lbl;
+
+  // Resumen bar
+  const rb = g('resumen-bar');
+  if(n>0){
+    rb.style.display='flex';
+    g('rb-n').textContent    = n;
+    g('rb-cap').textContent  = fmt(sumCap);
+    g('rb-tot').textContent  = fmt(sumTot);
+    g('rb-pago').textContent = fmt(sumPago);
+    g('rb-dias').textContent = promDias+'d';
+  } else {
+    rb.style.display='none';
+  }
+
+  g('btn-exportar').disabled = n===0;
+  generarMensaje();
+}
+
+// ══════════════════════════════════════════════
+// EXPORTAR XLSX
+// ══════════════════════════════════════════════
+function exportarXLSX(){
+  const sel = getSeleccionadas();
+  if(!sel.length){ toast('Selecciona al menos una fila','err'); return; }
+
+  const nombre   = (g('rep-nombre').value||'Reporte_Simulaciones').replace(/\s/g,'_');
+  const periodo  = g('rep-periodo').value||'';
+  const fechaGen = new Date().toLocaleString('es-MX');
+  archivoNombre  = `${nombre}_${new Date().toISOString().slice(0,10)}.xlsx`;
+
+  // Hoja 1 — Datos
+  const cabecera = ['ID Sim','ID Cliente','Nombre Cliente','Teléfono','Correo','Fecha/Hora','Capital ($)','Días','Interés (%)','Interés ($)','Pago Diario ($)','Total ($)','Ubicación','Estado','Notas'];
+  const filas = sel.map(s=>[
+    s.id, s.idCliente, s.nombre, s.telefono, s.correo,
+    s.fechaHora, Number(s.capital)||'', Number(s.dias)||'',
+    Number(s.interesPorc)||'', Number(s.interesTotal)||'',
+    Number(s.pagoDiario)||'', Number(s.total)||'',
+    s.ubicacion, s.estado, s.notas
+  ]);
+
+  // Fila de totales
+  const sumCap  = sel.reduce((a,s)=>a+(Number(s.capital)||0),0);
+  const sumTot  = sel.reduce((a,s)=>a+(Number(s.total)||0),0);
+  const sumPago = sel.reduce((a,s)=>a+(Number(s.pagoDiario)||0),0);
+  const fila_total = ['','','TOTALES','','',`${sel.length} registros`,sumCap,'','','',sumPago,sumTot,'','',''];
+
+  const ws_data = [cabecera, ...filas, [], fila_total];
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+  // Ancho de columnas
+  ws['!cols'] = [
+    {wch:14},{wch:14},{wch:22},{wch:14},{wch:24},
+    {wch:18},{wch:12},{wch:7},{wch:10},{wch:12},
+    {wch:14},{wch:12},{wch:28},{wch:11},{wch:24}
+  ];
+
+  // Hoja 2 — Resumen
+  const ws2_data = [
+    ['REPORTE DE SIMULACIONES — SimPréstamos'],
+    [],
+    ['Generado',    fechaGen],
+    ['Período',     periodo||'—'],
+    ['Total filas', sel.length],
+    [],
+    ['RESUMEN FINANCIERO'],
+    ['Suma Capital',    sumCap],
+    ['Suma Total',      sumTot],
+    ['Suma Pago Diario',sumPago],
+    ['Días promedio',   sel.length ? Math.round(sel.reduce((a,s)=>a+(Number(s.dias)||0),0)/sel.length) : 0],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(ws2_data);
+  ws2['!cols'] = [{wch:22},{wch:20}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws,  'Simulaciones');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Resumen');
+
+  XLSX.writeFile(wb, archivoNombre);
+  toast(`✅ ${archivoNombre} descargado`,'ok');
+  generarMensaje();
+}
+
+// ══════════════════════════════════════════════
+// WHATSAPP
+// ══════════════════════════════════════════════
+function generarMensaje(){
+  const sel      = getSeleccionadas();
+  const n        = sel.length;
+  const nombre   = g('wa-nombre')?.value||'';
+  const periodo  = g('rep-periodo')?.value||'';
+  const rep      = g('rep-nombre')?.value||'Reporte_Simulaciones';
+  const fecha    = new Date().toLocaleDateString('es-MX');
+
+  const sumCap = sel.reduce((a,s)=>a+(Number(s.capital)||0),0);
+  const sumTot = sel.reduce((a,s)=>a+(Number(s.total)||0),0);
+
+  const msg = [
+    `📊 *REPORTE DE SIMULACIONES — SimPréstamos*`,
+    ``,
+    nombre ? `Hola *${nombre}*, te comparto el reporte generado.` : `Reporte de simulaciones adjunto.`,
+    ``,
+    `📄 *Archivo:* ${rep}_${new Date().toISOString().slice(0,10)}.xlsx`,
+    periodo ? `🗓️ *Período:* ${periodo}` : '',
+    `📅 *Generado:* ${fecha}`,
+    ``,
+    `📋 *Resumen:*`,
+    `• Registros: *${n}*`,
+    n>0 ? `• Σ Capital: *${fmt(sumCap)}*` : '',
+    n>0 ? `• Σ Total:   *${fmt(sumTot)}*` : '',
+    ``,
+    `⬇️ El archivo fue descargado en tu dispositivo.`,
+    `Puedes compartirlo desde tu carpeta de descargas.`,
+    ``,
+    `_SimPréstamos — ${fecha}_`
+  ].filter(v=>v!==null && v!==undefined && v!==false).join('\n');
+
+  const ta = g('wa-msg');
+  if(ta) ta.value = msg;
+}
+
+function enviarWA(){
+  const tel = g('wa-tel').value.trim();
+  const msg = g('wa-msg').value.trim();
+  if(!tel){ toast('Ingresa el número de WhatsApp','err'); return; }
+  if(!msg){ toast('El mensaje está vacío','err'); return; }
+
+  const t = String(tel).replace(/\D/g,'');
+  const num = t.length===10 ? '52'+t : t;
+  window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
+  toast('📱 WhatsApp abierto','ok');
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+window.addEventListener('load', ()=>{
+  generarMensaje();
+  // Regenerar mensaje cuando cambian campos
+  ['wa-nombre','rep-nombre','rep-periodo'].forEach(id=>{
+    const el = g(id);
+    if(el) el.addEventListener('input', generarMensaje);
+  });
+});
+</script>
+</body>
+</html>
