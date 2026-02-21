@@ -224,11 +224,95 @@ tbody td{padding:9px 12px;color:var(--texto);vertical-align:middle}
 
   <!-- TABS -->
   <div class="tabs">
+    <button class="tab-btn" onclick="cambiarTab('simulaciones',this)"><span>💰</span> Simulaciones</button>
     <button class="tab-btn activo" onclick="cambiarTab('agendar',this)"><span>📅</span> Agendar Cita</button>
     <button class="tab-btn" onclick="cambiarTab('consultar',this)"><span>🔍</span> Mis Citas</button>
     <button class="tab-btn" onclick="cambiarTab('calendario',this)"><span>🗓️</span> Calendario</button>
     <button class="tab-btn" onclick="cambiarTab('cliente',this)"><span>👤</span> Ficha Cliente</button>
     <button class="tab-btn" onclick="cambiarTab('notificaciones',this)"><span>🔔</span> Notificaciones</button>
+  </div>
+
+  <!-- ============================================================
+       TAB 0: SIMULACIONES
+  ============================================================ -->
+  <div id="tab-simulaciones" class="seccion">
+
+    <div class="card">
+      <div class="card-titulo">💰 Consultar Simulaciones de Préstamo</div>
+      <div class="alerta alerta-info">
+        <span>ℹ️</span>
+        <span>Carga las simulaciones desde Google Sheets, selecciona una y presiona <strong>📅 Agendar Entrevista</strong> para pasar todos los datos al agendador automáticamente.</span>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" id="filtro-sims" placeholder="🔍 Buscar por nombre, teléfono, ID simulación, estado..." oninput="filtrarSimulaciones()">
+        <select class="search-input" style="max-width:170px" id="filtro-sim-estado" onchange="filtrarSimulaciones()">
+          <option value="">Todos los estados</option>
+          <option value="Completo">✅ Completo</option>
+          <option value="Nuevo">⚠️ Nuevo</option>
+          <option value="Pendiente">⏳ Pendiente</option>
+        </select>
+        <button class="btn btn-azul btn-sm" onclick="cargarSimulaciones()">🔄 Cargar Simulaciones</button>
+        <button class="btn btn-ghost btn-sm" onclick="limpiarSeleccionSim()">✕ Limpiar</button>
+      </div>
+
+      <!-- STATS MINI DE SIMULACIONES -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px" id="stats-sims" class="stats-sims">
+        <div class="stat-card"><div class="st-ico">📊</div><div class="st-num" id="sim-stat-total">—</div><div class="st-lbl">Total</div></div>
+        <div class="stat-card"><div class="st-ico">✅</div><div class="st-num" id="sim-stat-completo">—</div><div class="st-lbl">Completas</div></div>
+        <div class="stat-card"><div class="st-ico">⚠️</div><div class="st-num" id="sim-stat-nuevo">—</div><div class="st-lbl">Nuevas</div></div>
+        <div class="stat-card"><div class="st-ico">📅</div><div class="st-num" id="sim-stat-agendadas">—</div><div class="st-lbl">Con Cita</div></div>
+      </div>
+
+      <div class="tabla-wrap">
+        <table id="tabla-simulaciones">
+          <thead>
+            <tr>
+              <th>Sel.</th>
+              <th>ID Simulación</th>
+              <th>Fecha/Hora</th>
+              <th>Cliente</th>
+              <th>Teléfono</th>
+              <th>Capital</th>
+              <th>Días</th>
+              <th>Interés%</th>
+              <th>Pago Diario</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-sims-body">
+            <tr><td colspan="12"><div class="empty"><div class="ico">💰</div><p>Presiona "Cargar Simulaciones" para ver los datos de Google Sheets</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DETALLE DE SIMULACIÓN SELECCIONADA -->
+    <div id="sim-seleccionada-card" style="display:none">
+      <div class="card" style="border-color:rgba(0,229,176,.35);background:rgba(0,229,176,.04)">
+        <div class="card-titulo">📋 Simulación Seleccionada</div>
+        <div class="g2">
+          <div>
+            <div style="font-size:.75rem;font-weight:700;color:var(--verde);text-transform:uppercase;margin-bottom:10px;letter-spacing:.06em">👤 Datos del Cliente</div>
+            <div id="sim-det-cliente" class="cliente-box"></div>
+          </div>
+          <div>
+            <div style="font-size:.75rem;font-weight:700;color:var(--verde);text-transform:uppercase;margin-bottom:10px;letter-spacing:.06em">💰 Cálculo del Préstamo</div>
+            <div id="sim-det-calculo" class="sim-box" style="margin-top:0"></div>
+          </div>
+        </div>
+        <div class="sep"></div>
+        <div class="fila-btns">
+          <button class="btn btn-primary" onclick="usarSimEnAgenda()" style="font-size:1rem;padding:13px 28px">
+            📅 Agendar Entrevista con estos datos
+          </button>
+          <button class="btn btn-wa" onclick="waDesdeSimulacion()">📱 Notificar por WhatsApp</button>
+          <button class="btn btn-ghost" onclick="limpiarSeleccionSim()">✕ Deseleccionar</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ============================================================
@@ -624,6 +708,7 @@ function cambiarTab(id, btn){
   if(id==='consultar') cargarCitas();
   if(id==='calendario') renderCalendario();
   if(id==='notificaciones') actualizarPlantilla();
+  if(id==='simulaciones') { if(!todasSimulaciones.length) cargarSimulaciones(); }
 }
 
 // =====================================================
@@ -1251,6 +1336,278 @@ function renderLog(){
       <div style="font-size:.83rem;color:var(--texto);margin-top:4px">${l.desc}</div>
     </div>
   `).join('');
+}
+
+// =====================================================
+// TAB SIMULACIONES — CONSULTA Y SELECCIÓN
+// =====================================================
+let todasSimulaciones = [];
+let simSeleccionada   = null;
+
+async function cargarSimulaciones(){
+  const tbody = document.getElementById('tabla-sims-body');
+  tbody.innerHTML = `<tr><td colspan="12"><div class="empty"><div class="ico"><div style="width:22px;height:22px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--verde);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div><p>Cargando desde Google Sheets...</p></div></td></tr>`;
+
+  const datos = await fetchGAS('simulaciones');
+
+  // El AppScript actual no tiene endpoint tipo=simulaciones,
+  // así que lo manejamos: si no hay datos, mostramos mensaje orientador
+  if(!datos || !datos.success){
+    // Intentar cargar clientes y construir vista desde ahí como fallback
+    const datosC = await fetchGAS('clientes');
+    if(!datosC?.success){
+      tbody.innerHTML=`<tr><td colspan="12"><div class="empty"><div class="ico">⚠️</div><p>No se pudo conectar. Verifica la URL del AppScript.</p></div></td></tr>`;
+      return;
+    }
+    // Mostrar clientes como simulaciones aproximadas
+    const clientes = datosC.data?.clientes || [];
+    todasSimulaciones = clientes.map(c => ({
+      id:           c.idCliente,
+      idCliente:    c.idCliente,
+      fechaHora:    c.ultimaInteraccion || c.fechaRegistro,
+      nombre:       c.nombreCliente,
+      telefono:     c.telefono,
+      correo:       c.correo,
+      ubicacion:    c.ubicacion,
+      capital:      '',
+      dias:         '',
+      interesPorc:  '',
+      interesTotal: '',
+      total:        '',
+      pagoDiario:   '',
+      estado:       String(c.estado||'').replace(/[✅❌⚠️]\s*/,'') || 'Activo',
+      notas:        `${c.cantidadSimulaciones||0} simulaciones registradas`,
+      _esCliente:   true
+    }));
+    toast(`${clientes.length} clientes cargados (sin datos de cálculo — agrega endpoint "simulaciones" al AppScript)`, 'inf', 6000);
+  } else {
+    todasSimulaciones = (datos.data?.simulaciones || []).map(s => ({
+      id:           s[0],  // Col A - ID
+      idCliente:    s[1],  // Col B
+      fechaHora:    s[2],  // Col C
+      nombre:       s[3],  // Col D
+      telefono:     s[4],  // Col E
+      capital:      s[5],  // Col F
+      dias:         s[6],  // Col G
+      interesPorc:  s[7],  // Col H
+      interesTotal: s[8],  // Col I
+      total:        s[9],  // Col J
+      pagoDiario:   s[10], // Col K
+      latitud:      s[11],
+      longitud:     s[12],
+      ubicacion:    s[13], // Col N - Dirección
+      estado:       String(s[17]||'').replace(/[✅❌⚠️]\s*/,''), // Col R
+      notas:        s[18], // Col S
+      correo:       s[19], // Col T
+    }));
+  }
+
+  actualizarStatsSims();
+  renderTablaSims(todasSimulaciones);
+}
+
+function actualizarStatsSims(){
+  const total    = todasSimulaciones.length;
+  const completo = todasSimulaciones.filter(s=>s.estado==='Completo'||s.estado==='Activo').length;
+  const nuevo    = todasSimulaciones.filter(s=>s.estado==='Nuevo').length;
+  const conCita  = todasSimulaciones.filter(s=>
+    citasLocales.some(c=>c.idCliente===s.idCliente||c.simId===s.id)
+  ).length;
+  document.getElementById('sim-stat-total').textContent    = total;
+  document.getElementById('sim-stat-completo').textContent = completo;
+  document.getElementById('sim-stat-nuevo').textContent    = nuevo;
+  document.getElementById('sim-stat-agendadas').textContent= conCita;
+}
+
+function filtrarSimulaciones(){
+  const q   = document.getElementById('filtro-sims').value.toLowerCase();
+  const est = document.getElementById('filtro-sim-estado').value;
+  const lista = todasSimulaciones.filter(s=>{
+    const txt = `${s.id} ${s.nombre} ${s.telefono} ${s.idCliente} ${s.correo}`.toLowerCase();
+    const okQ = !q || txt.includes(q);
+    const okE = !est || s.estado === est;
+    return okQ && okE;
+  });
+  renderTablaSims(lista);
+}
+
+function renderTablaSims(lista){
+  const tbody = document.getElementById('tabla-sims-body');
+  if(!lista.length){
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty"><div class="ico">📭</div><p>Sin resultados</p></div></td></tr>`;
+    return;
+  }
+
+  // Saber cuáles ya tienen cita
+  const idsConCita = new Set(citasLocales.map(c=>c.idCliente).concat(citasLocales.map(c=>c.simId)));
+
+  tbody.innerHTML = lista.map(s => {
+    const tieneCita = idsConCita.has(s.idCliente) || idsConCita.has(s.id);
+    const esSel     = simSeleccionada?.id === s.id;
+    const estadoLimpio = s.estado||'—';
+    const badgeSim  = estadoLimpio==='Completo'||estadoLimpio==='Activo'
+      ? `<span class="badge badge-confirmada">✅ ${estadoLimpio}</span>`
+      : estadoLimpio==='Nuevo'
+        ? `<span class="badge badge-pendiente">⚠️ Nuevo</span>`
+        : `<span class="badge badge-realizada">${estadoLimpio}</span>`;
+    return `
+      <tr style="${esSel?'background:rgba(0,229,176,.07);outline:1px solid rgba(0,229,176,.3)':''}">
+        <td>
+          <input type="radio" name="sim-radio" value="${s.id}"
+            ${esSel?'checked':''}
+            onchange="seleccionarSim('${s.id}')"
+            style="accent-color:var(--verde);width:16px;height:16px;cursor:pointer">
+        </td>
+        <td><span class="id-tag">${s.id}</span></td>
+        <td style="font-size:.78rem">${s.fechaHora||'—'}</td>
+        <td><span class="nombre">${s.nombre||'—'}</span></td>
+        <td>${s.telefono||'—'}</td>
+        <td style="color:var(--verde);font-weight:700">${s.capital?fmt(s.capital):'—'}</td>
+        <td>${s.dias||'—'}</td>
+        <td>${s.interesPorc?s.interesPorc+'%':'—'}</td>
+        <td style="color:var(--amarillo);font-weight:700">${s.pagoDiario?fmt(s.pagoDiario):'—'}</td>
+        <td style="color:var(--blanco);font-weight:700">${s.total?fmt(s.total):'—'}</td>
+        <td>${badgeSim}${tieneCita?'<span class="badge badge-realizada" style="margin-left:4px">📅</span>':''}</td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="seleccionarSimYAgendar('${s.id}')">
+            📅 Agendar
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function seleccionarSim(id){
+  simSeleccionada = todasSimulaciones.find(s=>s.id===id) || null;
+  if(!simSeleccionada){ limpiarSeleccionSim(); return; }
+  mostrarDetalleSimSeleccionada(simSeleccionada);
+  filtrarSimulaciones(); // re-render para resaltar fila
+}
+
+function seleccionarSimYAgendar(id){
+  seleccionarSim(id);
+  // Scroll al detalle
+  setTimeout(()=>{
+    document.getElementById('sim-seleccionada-card')?.scrollIntoView({behavior:'smooth',block:'start'});
+  }, 100);
+}
+
+function mostrarDetalleSimSeleccionada(s){
+  const card = document.getElementById('sim-seleccionada-card');
+  card.style.display = 'block';
+
+  document.getElementById('sim-det-cliente').innerHTML = `
+    <div class="fila"><span class="key">🆔 ID Simulación</span><span class="val"><span class="id-tag">${s.id}</span></span></div>
+    <div class="fila"><span class="key">👤 Nombre</span><span class="val">${s.nombre||'Sin datos'}</span></div>
+    <div class="fila"><span class="key">📞 Teléfono</span><span class="val">${s.telefono||'—'}</span></div>
+    <div class="fila"><span class="key">📧 Correo</span><span class="val">${s.correo||'No registrado'}</span></div>
+    <div class="fila"><span class="key">📍 Dirección</span><span class="val">${s.ubicacion||'—'}</span></div>
+    <div class="fila"><span class="key">📅 Fecha sim.</span><span class="val">${s.fechaHora||'—'}</span></div>
+    ${s.notas?`<div class="fila"><span class="key">📝 Notas</span><span class="val">${s.notas}</span></div>`:''}
+  `;
+
+  document.getElementById('sim-det-calculo').innerHTML = `
+    <div class="sim-row"><span class="sk">💵 Capital</span><span class="sv">${s.capital?fmt(s.capital):'—'}</span></div>
+    <div class="sim-row"><span class="sk">📅 Plazo</span><span class="sv">${s.dias?s.dias+' días':'—'}</span></div>
+    <div class="sim-row"><span class="sk">📈 Interés %</span><span class="sv">${s.interesPorc?s.interesPorc+'%':'—'}</span></div>
+    <div class="sim-row"><span class="sk">💸 Interés $</span><span class="sv">${s.interesTotal?fmt(s.interesTotal):'—'}</span></div>
+    <div class="sim-row"><span class="sk">🗓️ Pago Diario</span><span class="sv" style="font-size:1.1rem;color:var(--amarillo)">${s.pagoDiario?fmt(s.pagoDiario):'—'}</span></div>
+    <div class="sim-row"><span class="sk">💰 Total a Pagar</span><span class="sv" style="font-size:1.1rem">${s.total?fmt(s.total):'—'}</span></div>
+  `;
+}
+
+function limpiarSeleccionSim(){
+  simSeleccionada = null;
+  document.getElementById('sim-seleccionada-card').style.display = 'none';
+  document.querySelectorAll('input[name="sim-radio"]').forEach(r=>r.checked=false);
+  filtrarSimulaciones();
+}
+
+function usarSimEnAgenda(){
+  if(!simSeleccionada){ toast('Selecciona una simulación primero','err'); return; }
+  const s = simSeleccionada;
+
+  // Ir a pestaña Agendar
+  document.querySelector('.tab-btn[onclick*="agendar"]').click();
+
+  // Llenar búsqueda de cliente con teléfono
+  if(s.telefono){
+    document.getElementById('buscar-tel').value = s.telefono;
+  }
+  if(s.idCliente){
+    document.getElementById('buscar-id').value = s.idCliente;
+  }
+
+  // Construir objeto cliente desde simulación y mostrarlo directamente
+  const clienteSimulado = {
+    idCliente:            s.idCliente || s.id,
+    nombreCliente:        s.nombre,
+    telefono:             s.telefono,
+    correo:               s.correo,
+    ubicacion:            s.ubicacion,
+    cantidadSimulaciones: 1,
+    estado:               s.estado || 'Activo',
+    fechaRegistro:        s.fechaHora,
+    ultimaInteraccion:    s.fechaHora,
+  };
+  clienteActual = clienteSimulado;
+  mostrarCliente(clienteSimulado);
+
+  // Llenar ID de simulación vinculada
+  document.getElementById('cita-sim-id').value = s.id;
+
+  // Pre-llenar notas con el resumen del cálculo
+  const resumen = [
+    `Simulación: ${s.id}`,
+    s.capital    ? `Capital: ${fmt(s.capital)}`       : '',
+    s.dias       ? `Plazo: ${s.dias} días`             : '',
+    s.interesPorc? `Interés: ${s.interesPorc}%`       : '',
+    s.pagoDiario ? `Pago diario: ${fmt(s.pagoDiario)}`: '',
+    s.total      ? `Total: ${fmt(s.total)}`           : '',
+  ].filter(Boolean).join(' | ');
+  document.getElementById('cita-notas').value = resumen;
+
+  // Pre-llenar notificaciones con datos del cálculo
+  document.getElementById('notif-nombre').value  = s.nombre || '';
+  document.getElementById('notif-tel').value     = s.telefono || '';
+  document.getElementById('notif-email').value   = s.correo || '';
+  document.getElementById('notif-capital').value = s.capital || '';
+  document.getElementById('notif-dias').value    = s.dias || '';
+  document.getElementById('notif-pago').value    = s.pagoDiario || '';
+  document.getElementById('notif-total').value   = s.total || '';
+
+  // Fecha por defecto = mañana 10am
+  const manana = new Date();
+  manana.setDate(manana.getDate() + 1);
+  manana.setHours(10, 0, 0, 0);
+  manana.setMinutes(manana.getMinutes() - manana.getTimezoneOffset());
+  document.getElementById('cita-fecha').value = manana.toISOString().slice(0,16);
+
+  toast(`✅ Datos de ${s.nombre||'cliente'} cargados en el agendador`, 'ok');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function waDesdeSimulacion(){
+  if(!simSeleccionada){ toast('Selecciona una simulación','err'); return; }
+  const s = simSeleccionada;
+  const msg = [
+    `💰 *RESULTADO DE SU SIMULACIÓN — SimPréstamo*`,``,
+    `Hola *${s.nombre||'Cliente'}*, aquí el resumen de su cálculo:`,``,
+    s.capital    ? `💵 *Capital:* ${fmt(s.capital)}`       : '',
+    s.dias       ? `📅 *Plazo:* ${s.dias} días`            : '',
+    s.interesPorc? `📈 *Interés:* ${s.interesPorc}%`      : '',
+    s.pagoDiario ? `🗓️ *Pago diario:* ${fmt(s.pagoDiario)}`: '',
+    s.total      ? `💸 *Total a pagar:* ${fmt(s.total)}`  : '',``,
+    `¿Le interesa continuar? Le podemos agendar una entrevista sin costo.`,``,
+    `_SimPréstamo — ${new Date().toLocaleDateString('es-MX')}_`
+  ].filter(Boolean).join('\n');
+
+  const tel = s.telefono?.replace(/\D/g,'');
+  const n   = tel?.length===10 ? '52'+tel : tel;
+  window.open(`https://wa.me/${n}?text=${encodeURIComponent(msg)}`,'_blank');
+  registrarLog('WhatsApp', `Resultado sim enviado a ${s.nombre}`, s.id);
+  toast('📱 WhatsApp abierto','ok');
 }
 
 // =====================================================
