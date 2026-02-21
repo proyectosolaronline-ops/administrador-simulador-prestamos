@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Flyer SimPréstamo — 4 por hoja</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════
+   RESET & BODY
+══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:#c8d0dc;
+  padding:24px 16px 60px;
+  display:flex;flex-direction:column;align-items:center;gap:24px;
+}
+
+/* ══════════════════════════════════════════════
+   PANEL DE CONTROL
+══════════════════════════════════════════════ */
+.panel{
+  background:#0c1d30;border:1px solid #1e3a58;
+  border-radius:14px;padding:22px 24px;
+  max-width:860px;width:100%;
+}
+.panel-titulo{
+  font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;
+  color:#00e5b0;margin-bottom:18px;letter-spacing:.02em;
+}
+.sec-lbl{
+  font-size:.65rem;font-weight:700;color:rgba(0,229,176,.65);
+  text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px;
+}
+.pg2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.pg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+.pg4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+@media(max-width:680px){.pg3,.pg4{grid-template-columns:1fr 1fr}.pg2{grid-template-columns:1fr}}
+.ctrl{display:flex;flex-direction:column;gap:4px}
+.ctrl label{
+  font-size:.65rem;font-weight:700;color:#00e5b0;
+  text-transform:uppercase;letter-spacing:.07em;
+}
+.ctrl input[type=text],
+.ctrl input[type=url]{
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
+  border-radius:7px;color:#e8f4ff;font-family:'DM Sans',sans-serif;
+  font-size:.85rem;padding:9px 11px;outline:none;width:100%;
+}
+.ctrl input:focus{border-color:#00e5b0}
+.sub-hint{font-size:.61rem;color:rgba(255,255,255,.28);margin-top:3px}
+
+/* Upload sticker */
+.upload-area{
+  border:1.5px dashed rgba(0,229,176,.35);border-radius:9px;
+  padding:12px;text-align:center;cursor:pointer;
+  background:rgba(0,229,176,.04);transition:background .15s;
+}
+.upload-area:hover{background:rgba(0,229,176,.09)}
+.upload-area input[type=file]{display:none}
+.upload-area .u-lbl{font-size:.78rem;color:#00e5b0;font-weight:600}
+.upload-area .u-hint{font-size:.65rem;color:rgba(255,255,255,.3);margin-top:3px}
+.sticker-preview{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;
+}
+.sticker-thumb{
+  position:relative;width:100%;aspect-ratio:1;
+  border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05);cursor:pointer;
+}
+.sticker-thumb img{width:100%;height:100%;object-fit:contain;padding:4px}
+.sticker-thumb.sel{border:2px solid #00e5b0;background:rgba(0,229,176,.1)}
+.sticker-thumb .del-btn{
+  position:absolute;top:2px;right:2px;background:rgba(255,77,109,.85);
+  border:none;border-radius:50%;width:16px;height:16px;font-size:9px;
+  color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  line-height:1;
+}
+.sticker-sel-lbl{font-size:.7rem;color:rgba(255,255,255,.4);margin-top:6px}
+
+.sep{height:1px;background:rgba(255,255,255,.08);margin:16px 0}
+.btns-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn-fmt{
+  padding:9px 20px;border-radius:8px;font-family:'DM Sans',sans-serif;
+  font-size:.85rem;font-weight:700;border:none;cursor:pointer;transition:all .15s;
+}
+.btn-fmt.on{
+  background:linear-gradient(135deg,#0f4c81,#1a6db5);color:#fff;
+  box-shadow:0 4px 14px rgba(15,76,129,.4);
+}
+.btn-fmt:not(.on){
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+  color:rgba(255,255,255,.5);
+}
+.btn-print{
+  background:linear-gradient(135deg,#00e5b0,#00c49a);color:#07101e;
+  font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:700;
+  padding:10px 26px;border:none;border-radius:8px;cursor:pointer;
+  margin-left:auto;transition:all .15s;
+}
+.btn-print:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,229,176,.4)}
+
+/* ══════════════════════════════════════════════
+   HOJA IMPRIMIBLE
+══════════════════════════════════════════════ */
+.hoja{
+  width:216mm;
+  background:#fff;
+  box-shadow:0 8px 40px rgba(0,0,0,.22);
+  position:relative;
+}
+
+/* MEDIA CARTA — 1 flyer grande */
+.hoja.media{
+  height:140mm;
+  display:flex;align-items:center;justify-content:center;
+  padding:7mm;
+}
+
+/* CUARTO — 4 flyers en 2×2 */
+.hoja.cuarto{
+  height:279mm;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:0;
+  padding:3mm;
+  gap:3mm;
+}
+
+/* Líneas de corte */
+.hoja.cuarto::before{
+  content:'';position:absolute;
+  top:3mm;bottom:3mm;left:50%;
+  width:.3pt;background:repeating-linear-gradient(to bottom,#bbb 0,#bbb 4px,transparent 4px,transparent 9px);
+  pointer-events:none;z-index:10;
+}
+.hoja.cuarto::after{
+  content:'';position:absolute;
+  left:3mm;right:3mm;top:50%;
+  height:.3pt;background:repeating-linear-gradient(to right,#bbb 0,#bbb 4px,transparent 4px,transparent 9px);
+  pointer-events:none;z-index:10;
+}
+
+/* ══════════════════════════════════════════════
+   FLYER (celda)
+══════════════════════════════════════════════ */
+.flyer{
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  border-radius:2.5mm;
+  border:.3pt solid #dde4f0;
+}
+
+/* Tamaño según hoja */
+.hoja.media .flyer{width:200mm;height:124mm}
+/* En cuarto cada celda ocupa su lugar en el grid */
+
+/* ── BANNER SUPERIOR ── */
+.bn-top{
+  flex-shrink:0;
+  background:linear-gradient(135deg,#0a3560 0%,#1a6db5 55%,#0f4c81 100%);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  padding:0 5mm;
+}
+.hoja.media  .bn-top{height:26mm}
+.hoja.cuarto .bn-top{height:19mm}
+
+.bn-top::before{content:'';position:absolute;top:-15mm;left:-6mm;width:40mm;height:40mm;border-radius:50%;background:rgba(255,255,255,.05)}
+.bn-top::after {content:'';position:absolute;bottom:-12mm;right:-5mm;width:35mm;height:35mm;border-radius:50%;background:rgba(0,229,176,.07)}
+
+.bn-logo{font-family:'Syne',sans-serif;font-weight:800;color:rgba(255,255,255,.65);z-index:1;letter-spacing:-.01em}
+.hoja.media  .bn-logo{font-size:9pt}
+.hoja.cuarto .bn-logo{font-size:7pt}
+.bn-logo em{color:#00e5b0;font-style:normal}
+
+.bn-nombre{font-family:'Syne',sans-serif;font-weight:800;color:rgba(255,255,255,.45);z-index:1;letter-spacing:.04em;text-transform:uppercase}
+.hoja.media  .bn-nombre{font-size:6.5pt;margin-top:1mm}
+.hoja.cuarto .bn-nombre{font-size:5.5pt;margin-top:.8mm}
+
+.bn-top-txt{font-family:'Syne',sans-serif;font-weight:800;color:#fff;text-align:center;line-height:1.1;z-index:1}
+.hoja.media  .bn-top-txt{font-size:17pt;margin-top:2mm}
+.hoja.cuarto .bn-top-txt{font-size:11.5pt;margin-top:1.5mm}
+
+/* ── CUERPO ── */
+.flyer-body{
+  flex:1;background:#fff;
+  display:flex;align-items:center;
+}
+.hoja.media  .flyer-body{gap:6mm;padding:4mm 7mm}
+.hoja.cuarto .flyer-body{gap:3mm;padding:2.5mm 4mm}
+
+/* QR */
+.qr-wrap{display:flex;flex-direction:column;align-items:center;gap:1.5mm;flex-shrink:0}
+.qr-box{
+  border:2pt solid #0f4c81;border-radius:2mm;
+  background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.hoja.media  .qr-box{width:56mm;height:56mm;padding:1.5mm}
+.hoja.cuarto .qr-box{width:34mm;height:34mm;padding:1mm}
+.qr-box img,.qr-box canvas{width:100%!important;height:100%!important;display:block}
+.qr-label{font-size:5.5pt;color:#0f4c81;font-weight:700;text-transform:uppercase;letter-spacing:.07em;text-align:center}
+
+/* STICKER */
+.sticker-area{
+  display:flex;flex-direction:column;align-items:center;gap:1mm;flex-shrink:0;
+}
+.sticker-img{object-fit:contain;border-radius:1mm}
+.hoja.media  .sticker-img{width:18mm;height:18mm}
+.hoja.cuarto .sticker-img{width:12mm;height:12mm}
+.sticker-placeholder{
+  border:1.5pt dashed rgba(15,76,129,.2);border-radius:2mm;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(15,76,129,.03);
+}
+.hoja.media  .sticker-placeholder{width:18mm;height:18mm}
+.hoja.cuarto .sticker-placeholder{width:12mm;height:12mm}
+.sticker-placeholder span{font-size:8pt;opacity:.25}
+
+/* INFO */
+.flyer-info{flex:1;display:flex;flex-direction:column}
+.hoja.media  .flyer-info{gap:2.5mm}
+.hoja.cuarto .flyer-info{gap:1.5mm}
+
+.info-item{
+  display:flex;align-items:flex-start;
+  background:#f2f7ff;border-left:2pt solid #0f4c81;
+  border-radius:0 1.5mm 1.5mm 0;
+}
+.hoja.media  .info-item{gap:2.5mm;padding:2mm 3mm}
+.hoja.cuarto .info-item{gap:1.5mm;padding:1.5mm 2mm}
+
+.info-ico{flex-shrink:0;margin-top:.3pt}
+.hoja.media  .info-ico{font-size:10pt}
+.hoja.cuarto .info-ico{font-size:7.5pt}
+
+.info-col{display:flex;flex-direction:column;gap:1pt}
+.info-tit{font-family:'Syne',sans-serif;font-weight:700;color:#0f4c81;line-height:1.1}
+.info-des{color:#4a5e78;font-weight:500;line-height:1.3}
+.hoja.media  .info-tit{font-size:8.5pt} .hoja.media  .info-des{font-size:7.5pt}
+.hoja.cuarto .info-tit{font-size:6pt}   .hoja.cuarto .info-des{font-size:5.5pt}
+
+/* ── BANNER INFERIOR ── */
+.bn-bot{
+  flex-shrink:0;
+  background:linear-gradient(135deg,#00b894 0%,#00e5b0 50%,#00c49a 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 5mm;position:relative;overflow:hidden;
+}
+.hoja.media  .bn-bot{height:20mm}
+.hoja.cuarto .bn-bot{height:14mm}
+
+.bn-bot::before{content:'';position:absolute;top:-8mm;right:-5mm;width:30mm;height:30mm;border-radius:50%;background:rgba(255,255,255,.14)}
+.bn-bot-txt{font-family:'Syne',sans-serif;font-weight:800;color:#07101e;text-align:center;line-height:1.1;z-index:1}
+.hoja.media  .bn-bot-txt{font-size:15pt}
+.hoja.cuarto .bn-bot-txt{font-size:10pt}
+.bn-bot-sub{color:rgba(7,16,30,.6);font-weight:600;text-align:center;z-index:1}
+.hoja.media  .bn-bot-sub{font-size:7.5pt;margin-top:1.5mm}
+.hoja.cuarto .bn-bot-sub{font-size:6pt;margin-top:1mm}
+
+/* ══════════════════════════════════════════════
+   PRINT
+══════════════════════════════════════════════ */
+@page{size:letter portrait;margin:0}
+@media print{
+  body{background:#fff;padding:0;gap:0}
+  .panel{display:none!important}
+  .hoja{box-shadow:none;page-break-after:always}
+  .flyer{box-shadow:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════ PANEL ════════════════ -->
+<div class="panel">
+  <div class="panel-titulo">✏️ Personaliza tu flyer</div>
+
+  <!-- BANNERS Y NOMBRE -->
+  <div class="sec-lbl">🎨 Textos principales</div>
+  <div class="pg3">
+    <div class="ctrl">
+      <label>📛 Nombre del simulador</label>
+      <input type="text" id="txt-empresa" value="SimPréstamos" oninput="actualizar()">
+      <div class="sub-hint">Aparece como subtítulo en banner superior</div>
+    </div>
+    <div class="ctrl">
+      <label>🔵 Banner superior</label>
+      <input type="text" id="txt-top" value="¿Necesitas dinero rápido?" oninput="actualizar()">
+    </div>
+    <div class="ctrl">
+      <label>🔗 URL del QR</label>
+      <input type="url" id="txt-url" value="https://simprestamo.web.app" oninput="regenerarQR()">
+      <div class="sub-hint">URL de tu simulador</div>
+    </div>
+  </div>
+  <div class="pg2">
+    <div class="ctrl">
+      <label>🟢 Banner inferior</label>
+      <input type="text" id="txt-bot" value="Escanea y simula ahora mismo" oninput="actualizar()">
+    </div>
+    <div class="ctrl">
+      <label>🟢 Subtexto inferior</label>
+      <input type="text" id="txt-sub" value="Sin papeleos · Sin complicaciones" oninput="actualizar()">
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- ETIQUETAS -->
+  <div class="sec-lbl">📋 Etiquetas de beneficios</div>
+  <div class="pg4">
+    <div class="ctrl">
+      <label>Etiqueta 1</label>
+      <input type="text" id="ico1" value="💵" placeholder="🏠" oninput="actualizar()" style="width:50px">
+      <input type="text" id="tit1" value="Préstamos personales" oninput="actualizar()" style="margin-top:5px">
+      <input type="text" id="des1" value="Desde $1,000 hasta $20,000" oninput="actualizar()" style="margin-top:5px">
+    </div>
+    <div class="ctrl">
+      <label>Etiqueta 2</label>
+      <input type="text" id="ico2" value="📅" placeholder="📅" oninput="actualizar()" style="width:50px">
+      <input type="text" id="tit2" value="Plazos flexibles" oninput="actualizar()" style="margin-top:5px">
+      <input type="text" id="des2" value="27, 40, 54 y 68 días" oninput="actualizar()" style="margin-top:5px">
+    </div>
+    <div class="ctrl">
+      <label>Etiqueta 3</label>
+      <input type="text" id="ico3" value="⚡" placeholder="⚡" oninput="actualizar()" style="width:50px">
+      <input type="text" id="tit3" value="Proceso rápido" oninput="actualizar()" style="margin-top:5px">
+      <input type="text" id="des3" value="Simula en segundos" oninput="actualizar()" style="margin-top:5px">
+    </div>
+    <div class="ctrl">
+      <label>Etiqueta 4</label>
+      <input type="text" id="ico4" value="📱" placeholder="📱" oninput="actualizar()" style="width:50px">
+      <input type="text" id="tit4" value="100% desde tu celular" oninput="actualizar()" style="margin-top:5px">
+      <input type="text" id="des4" value="Sin papeleos · Sin filas" oninput="actualizar()" style="margin-top:5px">
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- STICKERS -->
+  <div class="sec-lbl">🖼️ Stickers / Imágenes decorativas</div>
+  <div class="pg2">
+    <div>
+      <label class="upload-area" for="sticker-upload">
+        <input type="file" id="sticker-upload" accept="image/*" multiple onchange="subirStickers(event)">
+        <div class="u-lbl">📎 Subir imágenes</div>
+        <div class="u-hint">PNG, JPG, SVG · Puedes subir varios</div>
+      </label>
+      <div class="sticker-preview" id="sticker-preview"></div>
+      <div class="sticker-sel-lbl" id="sticker-sel-lbl">Haz clic en un sticker para seleccionarlo como activo en el flyer</div>
+    </div>
+    <div class="ctrl" style="justify-content:center">
+      <label>Vista previa del sticker seleccionado</label>
+      <div style="margin-top:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;display:flex;align-items:center;justify-content:center;min-height:80px">
+        <img id="sticker-activo-prev" src="" alt="" style="max-width:80px;max-height:80px;display:none;object-fit:contain;border-radius:6px">
+        <span id="sticker-activo-vacio" style="font-size:.75rem;color:rgba(255,255,255,.25)">Sin sticker seleccionado</span>
+      </div>
+      <div class="sub-hint" style="margin-top:6px">El sticker aparece junto al QR en cada flyer</div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- FORMATO + IMPRIMIR -->
+  <div class="btns-row">
+    <span style="font-size:.68rem;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em">Formato:</span>
+    <button class="btn-fmt" id="btn-media"  onclick="setFormato('media')">📄 Media carta (1 flyer)</button>
+    <button class="btn-fmt on" id="btn-cuarto" onclick="setFormato('cuarto')">📋 Carta completa (4 flyers)</button>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir</button>
+  </div>
+</div>
+
+<!-- ════════════════ HOJA MEDIA CARTA ════════════════ -->
+<div class="hoja media" id="hoja-media" style="display:none">
+  <div class="flyer" id="f-media">
+    <div class="bn-top">
+      <div class="bn-logo" id="logo-media">Sim<em>Préstamos</em></div>
+      <div class="bn-nombre" id="nombre-media">SIMPRÉSTAMOS</div>
+      <div class="bn-top-txt" id="top-media">¿Necesitas dinero rápido?</div>
+    </div>
+    <div class="flyer-body">
+      <div class="qr-wrap">
+        <div class="qr-box"><div id="qr-media"></div></div>
+        <div class="qr-label">Escanea con tu cámara</div>
+      </div>
+      <div class="sticker-area">
+        <div class="sticker-placeholder" id="stk-placeholder-media"><span>🖼️</span></div>
+        <img class="sticker-img" id="stk-media" src="" alt="" style="display:none">
+      </div>
+      <div class="flyer-info" id="info-media"></div>
+    </div>
+    <div class="bn-bot">
+      <div class="bn-bot-txt" id="bot-media">Escanea y simula ahora mismo</div>
+      <div class="bn-bot-sub" id="sub-media">Sin papeleos · Sin complicaciones</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ HOJA CARTA 4 FLYERS ════════════════ -->
+<div class="hoja cuarto" id="hoja-cuarto">
+  <!-- FLYER 1 -->
+  <div class="flyer">
+    <div class="bn-top">
+      <div class="bn-logo" id="logo-1">Sim<em>Préstamos</em></div>
+      <div class="bn-nombre" id="nombre-1">SIMPRÉSTAMOS</div>
+      <div class="bn-top-txt" id="top-1">¿Necesitas dinero rápido?</div>
+    </div>
+    <div class="flyer-body">
+      <div class="qr-wrap">
+        <div class="qr-box"><div id="qr-1"></div></div>
+        <div class="qr-label">Escanea aquí</div>
+      </div>
+      <div class="sticker-area">
+        <div class="sticker-placeholder" id="stk-ph-1"><span>🖼️</span></div>
+        <img class="sticker-img" id="stk-1" src="" alt="" style="display:none">
+      </div>
+      <div class="flyer-info" id="info-1"></div>
+    </div>
+    <div class="bn-bot">
+      <div class="bn-bot-txt" id="bot-1">Escanea y simula ahora mismo</div>
+      <div class="bn-bot-sub" id="sub-1">Sin papeleos · Sin complicaciones</div>
+    </div>
+  </div>
+  <!-- FLYER 2 -->
+  <div class="flyer">
+    <div class="bn-top">
+      <div class="bn-logo" id="logo-2">Sim<em>Préstamos</em></div>
+      <div class="bn-nombre" id="nombre-2">SIMPRÉSTAMOS</div>
+      <div class="bn-top-txt" id="top-2">¿Necesitas dinero rápido?</div>
+    </div>
+    <div class="flyer-body">
+      <div class="qr-wrap">
+        <div class="qr-box"><div id="qr-2"></div></div>
+        <div class="qr-label">Escanea aquí</div>
+      </div>
+      <div class="sticker-area">
+        <div class="sticker-placeholder" id="stk-ph-2"><span>🖼️</span></div>
+        <img class="sticker-img" id="stk-2" src="" alt="" style="display:none">
+      </div>
+      <div class="flyer-info" id="info-2"></div>
+    </div>
+    <div class="bn-bot">
+      <div class="bn-bot-txt" id="bot-2">Escanea y simula ahora mismo</div>
+      <div class="bn-bot-sub" id="sub-2">Sin papeleos · Sin complicaciones</div>
+    </div>
+  </div>
+  <!-- FLYER 3 -->
+  <div class="flyer">
+    <div class="bn-top">
+      <div class="bn-logo" id="logo-3">Sim<em>Préstamos</em></div>
+      <div class="bn-nombre" id="nombre-3">SIMPRÉSTAMOS</div>
+      <div class="bn-top-txt" id="top-3">¿Necesitas dinero rápido?</div>
+    </div>
+    <div class="flyer-body">
+      <div class="qr-wrap">
+        <div class="qr-box"><div id="qr-3"></div></div>
+        <div class="qr-label">Escanea aquí</div>
+      </div>
+      <div class="sticker-area">
+        <div class="sticker-placeholder" id="stk-ph-3"><span>🖼️</span></div>
+        <img class="sticker-img" id="stk-3" src="" alt="" style="display:none">
+      </div>
+      <div class="flyer-info" id="info-3"></div>
+    </div>
+    <div class="bn-bot">
+      <div class="bn-bot-txt" id="bot-3">Escanea y simula ahora mismo</div>
+      <div class="bn-bot-sub" id="sub-3">Sin papeleos · Sin complicaciones</div>
+    </div>
+  </div>
+  <!-- FLYER 4 -->
+  <div class="flyer">
+    <div class="bn-top">
+      <div class="bn-logo" id="logo-4">Sim<em>Préstamos</em></div>
+      <div class="bn-nombre" id="nombre-4">SIMPRÉSTAMOS</div>
+      <div class="bn-top-txt" id="top-4">¿Necesitas dinero rápido?</div>
+    </div>
+    <div class="flyer-body">
+      <div class="qr-wrap">
+        <div class="qr-box"><div id="qr-4"></div></div>
+        <div class="qr-label">Escanea aquí</div>
+      </div>
+      <div class="sticker-area">
+        <div class="sticker-placeholder" id="stk-ph-4"><span>🖼️</span></div>
+        <img class="sticker-img" id="stk-4" src="" alt="" style="display:none">
+      </div>
+      <div class="flyer-info" id="info-4"></div>
+    </div>
+    <div class="bn-bot">
+      <div class="bn-bot-txt" id="bot-4">Escanea y simula ahora mismo</div>
+      <div class="bn-bot-sub" id="sub-4">Sin papeleos · Sin complicaciones</div>
+    </div>
+  </div>
+</div>
+
+<!-- QR lib -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ══════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════
+let stickerActivo = null; // base64 de la imagen seleccionada
+let stickers      = [];   // array de { name, src }
+let formato       = 'cuarto';
+
+const IDS = ['media','1','2','3','4'];
+
+function g(id){ return document.getElementById(id) }
+function v(id){ return (g(id)?.value ?? '').trim() }
+
+// ══════════════════════════════════════════
+// FORMATO
+// ══════════════════════════════════════════
+function setFormato(f){
+  formato = f;
+  g('hoja-media').style.display  = f==='media'  ? 'flex' : 'none';
+  g('hoja-cuarto').style.display = f==='cuarto' ? 'grid' : 'none';
+  g('btn-media').classList.toggle('on',  f==='media');
+  g('btn-cuarto').classList.toggle('on', f==='cuarto');
+}
+
+// ══════════════════════════════════════════
+// LOGO — divide nombre en 2 colores
+// ══════════════════════════════════════════
+function logoHTML(nombre){
+  if(!nombre) return 'SimPréstamos';
+  const mid = Math.ceil(nombre.length / 2);
+  return `${nombre.slice(0,mid)}<em>${nombre.slice(mid)}</em>`;
+}
+
+// ══════════════════════════════════════════
+// INFO — 4 etiquetas
+// ══════════════════════════════════════════
+function infoHTML(){
+  return [1,2,3,4].map(n=>`
+    <div class="info-item">
+      <span class="info-ico">${v('ico'+n)||''}</span>
+      <div class="info-col">
+        <div class="info-tit">${v('tit'+n)}</div>
+        <div class="info-des">${v('des'+n)}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+// ACTUALIZAR TODOS LOS CAMPOS
+// ══════════════════════════════════════════
+function actualizar(){
+  const top    = v('txt-top');
+  const bot    = v('txt-bot');
+  const sub    = v('txt-sub');
+  const logo   = logoHTML(v('txt-empresa'));
+  const nombre = v('txt-empresa').toUpperCase();
+  const info   = infoHTML();
+
+  IDS.forEach(x=>{
+    const set = (id, val, prop='textContent') => { const el=g(id); if(el) el[prop]=val; };
+    const setH = (id, val) => { const el=g(id); if(el) el.innerHTML=val; };
+    setH(`logo-${x}`,   logo);
+    set(`nombre-${x}`,  nombre);
+    set(`top-${x}`,     top);
+    set(`bot-${x}`,     bot);
+    set(`sub-${x}`,     sub);
+    setH(`info-${x}`,   info);
+  });
+
+  // Sticker
+  aplicarSticker();
+}
+
+// ══════════════════════════════════════════
+// QR
+// ══════════════════════════════════════════
+function regenerarQR(){
+  const url  = v('txt-url') || 'https://simprestamo.web.app';
+  const cfg  = (size) => ({
+    text: url, width: size, height: size,
+    colorDark: '#0f4c81', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  const targets = {
+    'qr-media': 200,
+    'qr-1': 120, 'qr-2': 120, 'qr-3': 120, 'qr-4': 120
+  };
+
+  Object.entries(targets).forEach(([id, size])=>{
+    const el = g(id);
+    if(!el) return;
+    el.innerHTML = '';
+    new QRCode(el, cfg(size));
+    setTimeout(()=>{
+      ['img','canvas'].forEach(tag=>{
+        const c = el.querySelector(tag);
+        if(c) c.style.cssText = 'width:100%!important;height:100%!important;display:block';
+      });
+    }, 120);
+  });
+}
+
+// ══════════════════════════════════════════
+// STICKERS
+// ══════════════════════════════════════════
+function subirStickers(e){
+  const files = Array.from(e.target.files);
+  files.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = ev => {
+      stickers.push({ name: file.name, src: ev.target.result });
+      renderStickerThumbs();
+      // Seleccionar automáticamente el primero subido
+      if(stickers.length === 1) seleccionarSticker(0);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderStickerThumbs(){
+  const prev = g('sticker-preview');
+  prev.innerHTML = stickers.map((s,i)=>`
+    <div class="sticker-thumb${stickerActivo===s.src?' sel':''}" onclick="seleccionarSticker(${i})">
+      <img src="${s.src}" alt="${s.name}">
+      <button class="del-btn" onclick="event.stopPropagation();borrarSticker(${i})">✕</button>
+    </div>`).join('');
+}
+
+function seleccionarSticker(idx){
+  stickerActivo = stickers[idx]?.src || null;
+  renderStickerThumbs();
+
+  const prev = g('sticker-activo-prev');
+  const vacio = g('sticker-activo-vacio');
+  if(stickerActivo){
+    prev.src = stickerActivo;
+    prev.style.display = 'block';
+    vacio.style.display = 'none';
+  } else {
+    prev.style.display = 'none';
+    vacio.style.display = 'block';
+  }
+  aplicarSticker();
+}
+
+function borrarSticker(idx){
+  stickers.splice(idx,1);
+  if(stickers.length === 0){
+    stickerActivo = null;
+    g('sticker-activo-prev').style.display = 'none';
+    g('sticker-activo-vacio').style.display = 'block';
+  } else {
+    seleccionarSticker(0);
+  }
+  renderStickerThumbs();
+  aplicarSticker();
+}
+
+function aplicarSticker(){
+  IDS.forEach(x=>{
+    const img = g(`stk-${x}`);
+    const ph  = g(`stk-placeholder-${x}`) || g(`stk-ph-${x}`);
+    if(!img) return;
+    if(stickerActivo){
+      img.src = stickerActivo;
+      img.style.display = 'block';
+      if(ph) ph.style.display = 'none';
+    } else {
+      img.style.display = 'none';
+      if(ph) ph.style.display = 'flex';
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+window.addEventListener('load', ()=>{
+  setFormato('cuarto');
+  actualizar();
+  regenerarQR();
+});
+</script>
+</body>
+</html>
