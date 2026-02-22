@@ -966,8 +966,9 @@ async function cargarSimulaciones(){
       id:s[0],idCliente:s[1],fechaHora:s[2],nombre:s[3],telefono:s[4],
       capital:s[5],dias:s[6],interesPorc:s[7],interesTotal:s[8],
       total:s[9],pagoDiario:s[10],latitud:s[11],longitud:s[12],
-      ubicacion:s[13],estado:String(s[17]||'').replace(/[✅❌⚠️]\s*/,''),
-      notas:s[18],correo:s[19],
+      ubicacion:s[13],linkMapa:s[14],fotoINE:s[15],fotoComp:s[16],
+estado:String(s[17]||'').replace(/[✅❌⚠️]\s*/,''),
+notas:s[18],correo:s[19],
     }));
   }
   actualizarStatsSims();
