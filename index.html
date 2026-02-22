@@ -1076,6 +1076,10 @@ function abrirModalSim(id){
       <div class="info-row"><span class="ik">📍 Dirección</span><span class="iv">${s.ubicacion||'—'}</span></div>
       <div class="info-row"><span class="ik">📅 Fecha</span><span class="iv">${s.fechaHora||'—'}</span></div>
       ${s.notas?`<div class="info-row"><span class="ik">📝 Notas</span><span class="iv">${s.notas}</span></div>`:''}
+      ${s.linkMapa&&s.linkMapa!=='No disponible'?`<div class="info-row"><span class="ik">🗺️ Mapa</span><span class="iv"><a href="${s.linkMapa}" target="_blank" style="color:var(--v);font-weight:600">📍 Ver Maps</a></span></div>`:''}
+      ${s.fotoINE&&s.fotoINE!=='No disponible'?`<div class="info-row"><span class="ik">🪪 INE</span><span class="iv"><a href="${s.fotoINE}" target="_blank" style="color:var(--v);font-weight:600">📄 Ver en Drive</a></span></div>`:''}
+      ${s.fotoComp&&s.fotoComp!=='No disponible'?`<div class="info-row"><span class="ik">🏠 Comprobante</span><span class="iv"><a href="${s.fotoComp}" target="_blank" style="color:var(--v);font-weight:600">📄 Ver en Drive</a></span></div>`:''}
+    </div>
     </div>
 
     <!-- Cálculo -->
