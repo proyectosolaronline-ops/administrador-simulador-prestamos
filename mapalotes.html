@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agregar Lote — SimPréstamo</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --v: #00e5b0;
+            --v2: #00c49a;
+            --a: #0f4c81;
+            --bg: #07101e;
+            --bg2: #0c1d30;
+            --bg3: #102038;
+            --bd: #1e3a58;
+            --tx: #a8c8e8;
+            --wh: #e8f4ff;
+            --rd: #ff4d6d;
+            --am: #ffc107;
+            --r: 14px;
+            --sh: 0 8px 32px rgba(0, 0, 0, .45);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--tx);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            background: var(--bg2);
+            border-bottom: 1px solid var(--bd);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 16px;
+            height: 56px;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--v);
+            flex: 1;
+        }
+        .logo span {
+            color: var(--wh);
+        }
+
+        /* MAPA */
+        #mapa-container {
+            flex: 1;
+            position: relative;
+            min-height: 300px;
+        }
+        #mapa {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Botón flotante para agregar en el mapa */
+        .btn-mapa {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 500;
+            background: var(--v);
+            color: var(--bg);
+            border: none;
+            padding: 14px 28px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 229, 176, 0.5);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-mapa:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+        .btn-mapa.modo-activo {
+            background: var(--rd);
+            color: white;
+            animation: pulso 1.2s infinite;
+        }
+        @keyframes pulso {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 20px rgba(255, 77, 109, 0);
+            }
+        }
+
+        /* Marcador temporal */
+        .marcador-temp {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            z-index: 600;
+            font-size: 36px;
+            pointer-events: none;
+            display: none;
+        }
+
+        /* FORMULARIO PANEL */
+        .form-panel {
+            background: var(--bg3);
+            border-top: 2px solid var(--bd);
+            padding: 16px;
+            max-height: 50vh;
+            overflow-y: auto;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+        .form-panel h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--wh);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 10px;
+        }
+        .campo label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--v);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+        .campo input,
+        .campo select {
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid var(--bd);
+            border-radius: 8px;
+            color: var(--wh);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            padding: 10px 12px;
+            outline: none;
+            width: 100%;
+        }
+        .campo input:focus,
+        .campo select:focus {
+            border-color: var(--v);
+            background: rgba(0, 229, 176, .04);
+        }
+        .campo select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300e5b0' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+            appearance: none;
+        }
+        .campo select option {
+            background: var(--bg3);
+            color: var(--wh);
+        }
+
+        .g2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .coords-display {
+            background: var(--bg2);
+            border: 1px solid var(--bd);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            color: var(--v);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* FOTO */
+        .foto-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .foto-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            border: 2px dashed var(--bd);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: var(--bg2);
+            flex-shrink: 0;
+        }
+        .foto-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .foto-preview .placeholder {
+            font-size: 28px;
+            opacity: 0.4;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--v), var(--v2));
+            color: var(--bg);
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .btn-foto {
+            background: var(--a);
+            color: #fff;
+            flex: 1;
+        }
+        .btn-ghost {
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid var(--bd);
+            color: var(--tx);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 12px;
+            z-index: 9999;
+            background: var(--bd);
+            border-radius: 10px;
+            padding: 10px 16px;
+            color: white;
+            font-size: 0.85rem;
+            border-left: 3px solid var(--v);
+            animation: in .3s ease;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+        }
+        .toast.err {
+            border-left-color: var(--rd);
+        }
+        @keyframes in {
+            from {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @media (min-width: 768px) {
+            body {
+                flex-direction: row;
+            }
+            #mapa-container {
+                flex: 2;
+            }
+            .form-panel {
+                flex: 1;
+                max-width: 400px;
+                max-height: 100vh;
+                border-top: none;
+                border-left: 2px solid var(--bd);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="logo">Sim<span>Préstamo</span> <span style="font-size:.7rem;color:var(--tx);font-weight:400;margin-left:4px">| Agregar Lote</span></div>
+        <button class="btn btn-ghost" onclick="history.back()">← Volver</button>
+    </div>
+
+    <!-- MAPA -->
+    <div id="mapa-container">
+        <div id="mapa"></div>
+        <button class="btn-mapa" id="btn-mapa" onclick="toggleModoAgregar()">📍 Agregar Lote en Mapa</button>
+    </div>
+
+    <!-- FORMULARIO -->
+    <div class="form-panel" id="form-panel">
+        <h2>📋 Datos del Lote</h2>
+
+        <div class="g2">
+            <div class="campo">
+                <label>Código de Lote *</label>
+                <input type="text" id="lote-codigo" placeholder="Ej: L-001">
+            </div>
+            <div class="campo">
+                <label>Tipo de Pago</label>
+                <select id="lote-tipopago">
+                    <option value="Contado">Contado</option>
+                    <option value="Crédito">Crédito</option>
+                    <option value="Financiamiento">Financiamiento</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="g2">
+            <div class="campo">
+                <label>Estado</label>
+                <select id="lote-estado">
+                    <option value="Disponible">✅ Disponible</option>
+                    <option value="Apartado">🔒 Apartado</option>
+                    <option value="Vendido">❌ Vendido</option>
+                </select>
+            </div>
+            <div class="campo">
+                <label>Valor ($)</label>
+                <input type="number" id="lote-valor" placeholder="150000" min="0" step="0.01">
+            </div>
+        </div>
+
+        <div class="g2">
+            <div class="campo">
+                <label>Metros</label>
+                <input type="text" id="lote-metros" placeholder="120">
+            </div>
+            <div class="campo">
+                <label>Medida</label>
+                <input type="text" id="lote-medida" placeholder="10x12">
+            </div>
+        </div>
+
+        <div class="campo">
+            <label>Localidad</label>
+            <input type="text" id="lote-localidad" placeholder="Ej: Querétaro Centro">
+        </div>
+
+        <!-- Coordenadas (se llenan automáticamente) -->
+        <div class="campo">
+            <label>📍 Coordenadas GPS</label>
+            <div class="coords-display" id="coords-display">Haz clic en el mapa para marcar ubicación</div>
+        </div>
+
+        <!-- FOTO -->
+        <div class="campo">
+            <label>📸 Foto del Lote</label>
+            <div class="foto-container">
+                <div class="foto-preview" id="foto-preview">
+                    <span class="placeholder">🏞️</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+                    <button class="btn btn-foto" onclick="tomarFoto()">📷 Cámara</button>
+                    <button class="btn btn-foto" onclick="abrirGaleria()">🖼️ Galería</button>
+                    <button class="btn btn-ghost btn-sm" onclick="quitarFoto()" id="btn-quitar-foto" style="display:none;">✕ Quitar foto</button>
+                </div>
+            </div>
+            <input type="file" id="input-foto" accept="image/*" style="display:none;">
+            <input type="file" id="input-galeria" accept="image/*" style="display:none;">
+        </div>
+
+        <!-- Botón guardar -->
+        <button class="btn btn-primary" id="btn-guardar" onclick="guardarLote()">💾 Guardar Lote</button>
+        <p style="font-size:.7rem;color:var(--tx);opacity:.5;text-align:center;margin-top:8px;">
+            Primero marca ubicación en el mapa, luego completa los datos
+        </p>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // ==================== CONFIGURACIÓN ====================
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbw83md07bzx1UmGRn51i-pRiuvQaEig_mUWS4VjvO0yTIlDCULqT8p3NGsSe2S4nZhzjA/exec';
+
+        // ==================== MAPA ====================
+        let mapa;
+        let marcadorLote = null;
+        let modoAgregar = false;
+        let latSeleccionada = null;
+        let lngSeleccionada = null;
+        let fotoBase64 = null;
+
+        function initMapa() {
+            // Intentar GPS
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) {
+                        crearMapa(pos.coords.latitude, pos.coords.longitude);
+                    },
+                    function() {
+                        // Fallback: centro de México
+                        crearMapa(23.6345, -102.5528);
+                    }, { timeout: 8000 }
+                );
+            } else {
+                crearMapa(23.6345, -102.5528);
+            }
+        }
+
+        function crearMapa(lat, lng) {
+            mapa = L.map('mapa').setView([lat, lng], 16);
+
+            // Capa satelital de Esri
+            L.tileLayer(
+                'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Esri | SimPréstamo',
+                    maxZoom: 20
+                }
+            ).addTo(mapa);
+
+            // Marcador de posición GPS
+            L.circleMarker([lat, lng], {
+                radius: 8,
+                color: '#00e5b0',
+                fillColor: '#00e5b0',
+                fillOpacity: 0.8,
+                weight: 2
+            }).addTo(mapa).bindPopup('📍 Tu ubicación').openPopup();
+
+            // Evento: clic en mapa para marcar lote
+            mapa.on('click', function(e) {
+                if (!modoAgregar) return;
+
+                var lat = e.latlng.lat.toFixed(6);
+                var lng = e.latlng.lng.toFixed(6);
+
+                colocarMarcador(e.latlng.lat, e.latlng.lng);
+                actualizarCoordenadas(lat, lng);
+                desactivarModoAgregar();
+                mostrarToast('📍 Lote marcado en: ' + lat + ', ' + lng);
+            });
+
+            console.log('✅ Mapa satelital cargado');
+        }
+
+        function colocarMarcador(lat, lng) {
+            if (marcadorLote) {
+                mapa.removeLayer(marcadorLote);
+            }
+            marcadorLote = L.marker([lat, lng], {
+                draggable: true,
+                icon: L.icon({
+                    iconUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="32" height="44" viewBox="0 0 32 44"%3E%3Cpath d="M16 0C7.2 0 0 7.2 0 16c0 12 16 28 16 28s16-16 16-28C32 7.2 24.8 0 16 0z" fill="%23e94560" stroke="%23fff" stroke-width="2"/%3E%3Ccircle cx="16" cy="16" r="8" fill="%23fff"/%3E%3C/svg%3E',
+                    iconSize: [32, 44],
+                    iconAnchor: [16, 44],
+                    popupAnchor: [0, -44]
+                })
+            }).addTo(mapa);
+
+            marcadorLote.bindPopup('🏠 Lote: ' + lat.toFixed(6) + ', ' + lng.toFixed(6)).openPopup();
+
+            // Actualizar al arrastrar
+            marcadorLote.on('dragend', function() {
+                var pos = marcadorLote.getLatLng();
+                actualizarCoordenadas(pos.lat.toFixed(6), pos.lng.toFixed(6));
+            });
+        }
+
+        function actualizarCoordenadas(lat, lng) {
+            latSeleccionada = lat;
+            lngSeleccionada = lng;
+            document.getElementById('coords-display').textContent = 'Lat: ' + lat + ' | Lng: ' + lng;
+            document.getElementById('coords-display').style.color = '#00e5b0';
+        }
+
+        function toggleModoAgregar() {
+            if (!mapa) {
+                mostrarToast('⏳ Espera que cargue el mapa...', 'err');
+                return;
+            }
+            modoAgregar = !modoAgregar;
+            var btn = document.getElementById('btn-mapa');
+            if (modoAgregar) {
+                btn.textContent = '🎯 Haz clic en el mapa para marcar';
+                btn.classList.add('modo-activo');
+                mapa.getContainer().style.cursor = 'crosshair';
+            } else {
+                desactivarModoAgregar();
+            }
+        }
+
+        function desactivarModoAgregar() {
+            modoAgregar = false;
+            var btn = document.getElementById('btn-mapa');
+            btn.textContent = '📍 Agregar Lote en Mapa';
+            btn.classList.remove('modo-activo');
+            if (mapa) mapa.getContainer().style.cursor = '';
+        }
+
+        // ==================== FOTO ====================
+        function tomarFoto() {
+            var input = document.getElementById('input-foto');
+            input.setAttribute('capture', 'environment');
+            input.click();
+        }
+
+        function abrirGaleria() {
+            var input = document.getElementById('input-galeria');
+            input.removeAttribute('capture');
+            input.click();
+        }
+
+        function quitarFoto() {
+            fotoBase64 = null;
+            document.getElementById('foto-preview').innerHTML = '<span class="placeholder">🏞️</span>';
+            document.getElementById('btn-quitar-foto').style.display = 'none';
+        }
+
+        function procesarImagen(file) {
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                fotoBase64 = e.target.result;
+                document.getElementById('foto-preview').innerHTML =
+                    '<img src="' + fotoBase64 + '" alt="Foto del lote">';
+                document.getElementById('btn-quitar-foto').style.display = 'inline-flex';
+                mostrarToast('📸 Foto cargada');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.getElementById('input-foto').addEventListener('change', function() {
+            if (this.files[0]) procesarImagen(this.files[0]);
+        });
+        document.getElementById('input-galeria').addEventListener('change', function() {
+            if (this.files[0]) procesarImagen(this.files[0]);
+        });
+
+        // ==================== GUARDAR ====================
+        function guardarLote() {
+            var codigo = document.getElementById('lote-codigo').value.trim();
+            if (!codigo) {
+                mostrarToast('⚠️ El código de lote es obligatorio', 'err');
+                return;
+            }
+            if (!latSeleccionada || !lngSeleccionada) {
+                mostrarToast('⚠️ Debes marcar la ubicación en el mapa', 'err');
+                return;
+            }
+
+            var payload = {
+                _accion: 'upsert_lote',
+                codigolote: codigo,
+                tipopago: document.getElementById('lote-tipopago').value,
+                estado: document.getElementById('lote-estado').value,
+                valor: Number(document.getElementById('lote-valor').value) || 0,
+                metros: document.getElementById('lote-metros').value,
+                medida: document.getElementById('lote-medida').value,
+                lat: latSeleccionada,
+                lng: lngSeleccionada,
+                localidad: document.getElementById('lote-localidad').value,
+                fotolote: fotoBase64 || ''
+            };
+
+            // Si hay ID en URL (edición)
+            var params = new URLSearchParams(window.location.search);
+            var idEditar = params.get('id');
+            if (idEditar) payload.idLote = idEditar;
+
+            var btn = document.getElementById('btn-guardar');
+            btn.disabled = true;
+            btn.textContent = '⏳ Guardando...';
+
+            fetch(GAS_URL, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    btn.disabled = false;
+                    btn.textContent = '💾 Guardar Lote';
+                    if (data.success) {
+                        mostrarToast('✅ Lote guardado exitosamente');
+                        // Limpiar formulario
+                        setTimeout(function() {
+                            limpiarFormulario();
+                        }, 1500);
+                    } else {
+                        mostrarToast('❌ Error: ' + (data.mensaje || data.message || 'Desconocido'), 'err');
+                    }
+                })
+                .catch(function(e) {
+                    btn.disabled = false;
+                    btn.textContent = '💾 Guardar Lote';
+                    mostrarToast('❌ Error de conexión', 'err');
+                    console.error(e);
+                });
+        }
+
+        function limpiarFormulario() {
+            ['lote-codigo', 'lote-metros', 'lote-medida', 'lote-localidad', 'lote-valor'].forEach(function(id) {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('lote-tipopago').value = 'Contado';
+            document.getElementById('lote-estado').value = 'Disponible';
+            latSeleccionada = null;
+            lngSeleccionada = null;
+            document.getElementById('coords-display').textContent = 'Haz clic en el mapa para marcar ubicación';
+            document.getElementById('coords-display').style.color = '#a8c8e8';
+            quitarFoto();
+            if (marcadorLote) {
+                mapa.removeLayer(marcadorLote);
+                marcadorLote = null;
+            }
+        }
+
+        // ==================== TOAST ====================
+        function mostrarToast(msg, tipo) {
+            tipo = tipo || 'ok';
+            var t = document.createElement('div');
+            t.className = 'toast' + (tipo === 'err' ? ' err' : '');
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(function() { t.style.opacity = '0'; }, 3000);
+            setTimeout(function() { t.remove(); }, 3500);
+        }
+
+        // ==================== CARGAR DATOS SI ES EDICIÓN ====================
+        function cargarDatosEdicion() {
+            var params = new URLSearchParams(window.location.search);
+            var id = params.get('id');
+            if (!id) return;
+
+            // Cargar datos del lote desde GAS
+            fetch(GAS_URL + '?tipo=lotes')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.success || !data.data || !data.data.lotes) return;
+
+                    var lotes = data.data.lotes;
+                    var lote = null;
+
+                    // Buscar lote por ID
+                    for (var i = 0; i < lotes.length; i++) {
+                        var l = lotes[i];
+                        var idLote = Array.isArray(l) ? l[0] : (l.idLote || l.IdLote || l.id);
+                        if (idLote == id) {
+                            lote = Array.isArray(l) ? {
+                                id: l[0],
+                                codigo: l[1],
+                                tipoPago: l[2],
+                                estado: l[3],
+                                valor: l[4],
+                                metros: l[5],
+                                medida: l[6],
+                                lat: l[7],
+                                lng: l[8],
+                                fecha: l[9],
+                                foto: l[10],
+                                localidad: l[11]
+                            } : l;
+                            break;
+                        }
+                    }
+
+                    if (lote) {
+                        prellenarFormulario(lote);
+                    }
+                })
+                .catch(function(e) {
+                    console.error('Error al cargar lote para editar:', e);
+                });
+        }
+
+        function prellenarFormulario(lote) {
+            document.getElementById('lote-codigo').value = lote.codigo || lote.codigolote || '';
+            document.getElementById('lote-tipopago').value = lote.tipoPago || lote.tipopago || 'Contado';
+            document.getElementById('lote-estado').value = lote.estado || 'Disponible';
+            document.getElementById('lote-valor').value = lote.valor || '';
+            document.getElementById('lote-metros').value = lote.metros || '';
+            document.getElementById('lote-medida').value = lote.medida || '';
+            document.getElementById('lote-localidad').value = lote.localidad || lote.Localidad || '';
+
+            var lat = parseFloat(lote.lat);
+            var lng = parseFloat(lote.lng);
+
+            if (!isNaN(lat) && !isNaN(lng)) {
+                latSeleccionada = lat;
+                lngSeleccionada = lng;
+                actualizarCoordenadas(lat, lng);
+
+                // Centrar mapa y colocar marcador
+                if (mapa) {
+                    mapa.setView([lat, lng], 17);
+                    colocarMarcador(lat, lng);
+                }
+            }
+
+            if (lote.foto || lote.fotolote) {
+                fotoBase64 = lote.foto || lote.fotolote;
+                document.getElementById('foto-preview').innerHTML =
+                    '<img src="' + fotoBase64 + '" alt="Foto del lote">';
+                document.getElementById('btn-quitar-foto').style.display = 'inline-flex';
+            }
+
+            mostrarToast('📝 Editando lote: ' + (lote.codigo || lote.codigolote || 'Sin código'));
+        }
+
+        // ==================== INICIAR ====================
+        window.addEventListener('DOMContentLoaded', function() {
+            initMapa();
+            cargarDatosEdicion();
+            console.log('✅ Agregar Lote - Mapa listo');
+        });
+    </script>
+</body>
+</html>
