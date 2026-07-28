@@ -263,40 +263,38 @@ async function postGAS(payload){
 }
 
 async function cargarLotes(){
-  const div=document.getElementById('lista-lotes');
-  div.innerHTML=`<div class="empty"><div class="spinner"></div><p>Cargando...</p></div>`;
-  const datos=await fetchGAS('lotes');
-  console.log('Datos recibidos:', JSON.stringify(datos));
+  var div = document.getElementById('lista-lotes');
+  div.innerHTML = '<div class="empty"><div class="spinner"></div><p>Cargando...</p></div>';
   
-  if(!datos?.success){
-    div.innerHTML=`<div class="empty"><p>❌ Error al cargar lotes</p></div>`;
-    toast('Error de conexión','err');
+  var datos = await fetchGAS('lotes');
+  
+  if(!datos || !datos.success){
+    div.innerHTML = '<div class="empty"><p>Error al cargar lotes</p></div>';
     return;
   }
 
-  // El backend devuelve arrays: [id, codigo, tipopago, estado, valor, metros, medida, lat, lng, fecha, foto, localidad]
-  const crudos = datos.data?.lotes || [];
+  var crudos = datos.data.lotes || [];
   
-  todosLotes = crudos.map(arr => ({
-    id:        arr[0],
-    codigo:    arr[1],
-    tipoPago:  arr[2],
-    estado:    arr[3] || 'Disponible',
-    valor:     arr[4],
-    metros:    arr[5],
-    medida:    arr[6],
-    lat:       arr[7],
-    lng:       arr[8],
-    fecha:     arr[9],
-    foto:      arr[10],
-    localidad: arr[11] || '—',
-  }));
+  todosLotes = crudos.map(function(arr){
+    return {
+      id:        arr[0],
+      codigo:    arr[1],
+      tipoPago:  arr[2],
+      estado:    arr[3] || 'Disponible',
+      valor:     Number(arr[4]) || 0,
+      metros:    arr[5],
+      medida:    arr[6],
+      lat:       arr[7],
+      lng:       arr[8],
+      fecha:     arr[9],
+      foto:      arr[10],
+      localidad: arr[11] || ''
+    };
+  });
 
-  console.log('Lotes mapeados:', todosLotes);
   renderLotes();
-  toast(`${todosLotes.length} lotes cargados`,'ok');
+  toast(todosLotes.length + ' lotes cargados', 'ok');
 }
-
 function renderLotes(){
   const div=document.getElementById('lista-lotes');
   if(!todosLotes.length){
