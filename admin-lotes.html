@@ -310,30 +310,32 @@ async function cargarLotes(){
 function renderLotes(){
   const div=document.getElementById('lista-lotes');
   if(!todosLotes.length){
-    div.innerHTML=`<div class="empty"><p>🏞️ Sin lotes registrados</p></div>`;
+    div.innerHTML='<div class="empty"><p>Sin lotes registrados</p></div>';
     return;
   }
   div.innerHTML=todosLotes.map(l=>`
     <div class="lote-row">
       <div class="lote-info">
-        <div class="lote-codigo">🏞️ ${l.codigo||'Sin código'}</div>
+        <div class="lote-codigo">Codigo: ${l.codigo||'Sin código'}</div>
         <div class="lote-meta">
-          <span>💰 ${l.valor ? fmt(l.valor) : '—'}</span>
-          <span>📐 ${l.metros||'—'} m²</span>
-          <span>📍 ${l.localidad||'—'}</span>
-          <span>💳 ${l.tipoPago||'—'}</span>
-          ${l.foto && l.foto !== 'No disponible' ? `<span>📷 <a href="${l.foto}" target="_blank" style="color:var(--v)">Ver</a></span>` : ''}
+          <span>Tipo de Pago: ${l.tipoPago||'—'}</span>
+          <span>Estado: ${l.estado||'—'}</span>
+          <span>Valor: ${l.valor ? fmt(l.valor) : '—'}</span>
+          <span>Metros: ${l.metros||'—'} m²</span>
+          <span>Medida: ${l.medida||'—'}</span>
+          <span>Latitud: ${l.lat||'—'}</span>
+          <span>Longitud: ${l.lng||'—'}</span>
+          <span>Localidad: ${l.localidad||'—'}</span>
+          <span>Fecha: ${l.fecha||'—'}</span>
         </div>
       </div>
-      <div style="text-align:right;margin-right:8px">${badge(l.estado)}</div>
       <div class="lote-acciones">
-        <button class="btn btn-azul btn-sm" onclick='editarLote(${JSON.stringify(l).replace(/'/g,"&#39;")})'>✏️</button>
-        <button class="btn btn-rojo btn-sm" onclick="eliminarLote('${l.id}','${(l.codigo||'Sin código').replace(/'/g,"\\'")}')">🗑</button>
+        <button class="btn btn-azul btn-sm" onclick='editarLote(${JSON.stringify(l).replace(/'/g,"&#39;")})'>Editar</button>
+        <button class="btn btn-rojo btn-sm" onclick="eliminarLote('${l.id}','${(l.codigo||'Sin código').replace(/'/g,"\\'")}')">Eliminar</button>
       </div>
     </div>
   `).join('');
 }
-
 function abrirFormLote(){
   loteEditando=null;
   document.getElementById('form-titulo').textContent='➕ Nuevo Lote';
