@@ -629,22 +629,18 @@ body::before{
     </div>
   </div>
 
-  <!-- ================================================
+    <!-- ================================================
        TAB: LOTES — Catálogo + Simulador de Crédito
   ================================================ -->
   <div id="tab-lotes" class="seccion">
-<div class="card">
-  <div class="card-titulo">🏞️ Lotes</div>
-  
-  <!-- BOTÓN ADMINISTRADOR -->
-  <button class="btn btn-azul btn-full" onclick="window.open('admin-lotes.html','_blank')" style="margin-bottom:14px">
-    ⚙️ Administrador de Lotes
-  </button>
-  
-  <div class="stats-row">
-    ...
+
     <div class="card">
       <div class="card-titulo">🏞️ Lotes</div>
+      
+      <button class="btn btn-primary btn-full" onclick="window.open('admin-lotes.html','_blank')" style="margin-bottom:14px;background:linear-gradient(135deg,#ff8c42,#e6732e);color:#fff;font-weight:700;font-size:.88rem;">
+        ⚙️ ABRIR ADMINISTRADOR DE LOTES
+      </button>
+      
       <div class="stats-row">
         <div class="stat-card"><div class="st-ico">📊</div><div class="st-num" id="lote-stat-total">—</div><div class="st-lbl">Total</div></div>
         <div class="stat-card"><div class="st-ico">✅</div><div class="st-num" id="lote-stat-disponible">—</div><div class="st-lbl">Disp.</div></div>
@@ -668,10 +664,6 @@ body::before{
       </div>
     </div>
   </div>
-
-  <div id="tab-notificaciones" class="seccion">
-    <div class="card">
-      <div class="card-titulo">📬 Notificación al Cliente</div>
       <div class="g2">
         <div class="campo">
           <label>Nombre</label>
