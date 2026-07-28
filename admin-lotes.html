@@ -307,35 +307,54 @@ async function cargarLotes(){
   renderLotes();
   toast(todosLotes.length + ' lotes cargados', 'ok');
 }
+
 function renderLotes(){
   const div=document.getElementById('lista-lotes');
   if(!todosLotes.length){
     div.innerHTML='<div class="empty"><p>Sin lotes registrados</p></div>';
     return;
   }
-  div.innerHTML=todosLotes.map(l=>`
-    <div class="lote-row">
-      <div class="lote-info">
-        <div class="lote-codigo">Codigo: ${l.codigo||'Sin código'}</div>
-        <div class="lote-meta">
-          <span>Tipo de Pago: ${l.tipoPago||'—'}</span>
-          <span>Estado: ${l.estado||'—'}</span>
-          <span>Valor: ${l.valor ? fmt(l.valor) : '—'}</span>
-          <span>Metros: ${l.metros||'—'} m²</span>
-          <span>Medida: ${l.medida||'—'}</span>
-          <span>Latitud: ${l.lat||'—'}</span>
-          <span>Longitud: ${l.lng||'—'}</span>
-          <span>Localidad: ${l.localidad||'—'}</span>
-          <span>Fecha: ${l.fecha||'—'}</span>
-        </div>
-      </div>
-      <div class="lote-acciones">
-        <button class="btn btn-azul btn-sm" onclick='editarLote(${JSON.stringify(l).replace(/'/g,"&#39;")})'>Editar</button>
-        <button class="btn btn-rojo btn-sm" onclick="eliminarLote('${l.id}','${(l.codigo||'Sin código').replace(/'/g,"\\'")}')">Eliminar</button>
-      </div>
-    </div>
-  `).join('');
+  
+  let html = `
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+    <thead>
+      <tr style="background:var(--a);color:#fff">
+        <th style="padding:8px;text-align:left">Código</th>
+        <th style="padding:8px;text-align:left">Tipo Pago</th>
+        <th style="padding:8px;text-align:left">Estado</th>
+        <th style="padding:8px;text-align:right">Valor</th>
+        <th style="padding:8px;text-align:right">Metros</th>
+        <th style="padding:8px;text-align:left">Medida</th>
+        <th style="padding:8px;text-align:left">Localidad</th>
+        <th style="padding:8px;text-align:center">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>`;
+    
+  todosLotes.forEach(function(l,i){
+    const bg = i%2===0 ? 'var(--bg3)' : 'var(--bg2)';
+    html += `
+      <tr style="background:${bg};border-bottom:1px solid var(--bd)">
+        <td style="padding:8px;color:var(--wh);font-weight:600">${l.codigo||'—'}</td>
+        <td style="padding:8px">${l.tipoPago||'—'}</td>
+        <td style="padding:8px">${badge(l.estado)}</td>
+        <td style="padding:8px;text-align:right;color:var(--v);font-weight:600">${l.valor?fmt(l.valor):'—'}</td>
+        <td style="padding:8px;text-align:right">${l.metros||'—'}</td>
+        <td style="padding:8px">${l.medida||'—'}</td>
+        <td style="padding:8px">${l.localidad||'—'}</td>
+        <td style="padding:8px;text-align:center">
+          <button class="btn btn-azul btn-sm" style="margin-right:4px" onclick='editarLote(${JSON.stringify(l).replace(/'/g,"&#39;")})'>Editar</button>
+          <button class="btn btn-rojo btn-sm" onclick="eliminarLote('${l.id}','${(l.codigo||'Sin código').replace(/'/g,"\\'")}')">Eliminar</button>
+        </td>
+      </tr>`;
+  });
+  
+  html += '</tbody></table></div>';
+  div.innerHTML = html;
 }
+
+  
 function abrirFormLote(){
   loteEditando=null;
   document.getElementById('form-titulo').textContent='➕ Nuevo Lote';
