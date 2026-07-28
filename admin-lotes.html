@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8"> 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Admin Lotes — SimPréstamo</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -273,25 +273,37 @@ async function cargarLotes(){
     return;
   }
 
-  var crudos = datos.data.lotes || [];
+   var crudos = datos.data.lotes || [];
   
-  todosLotes = crudos.map(function(arr){
-    return {
-      id:        arr[0],
-      codigo:    arr[1],
-      tipoPago:  arr[2],
-      estado:    arr[3] || 'Disponible',
-      valor:     Number(arr[4]) || 0,
-      metros:    arr[5],
-      medida:    arr[6],
-      lat:       arr[7],
-      lng:       arr[8],
-      fecha:     arr[9],
-      foto:      arr[10],
-      localidad: arr[11] || ''
-    };
-  });
-
+  // Detectar si viene como array de arrays o array de objetos
+  if (crudos.length > 0 && Array.isArray(crudos[0])) {
+    // Formato array: [id, codigo, tipopago, estado, valor, metros, medida, lat, lng, fecha, foto, localidad]
+    todosLotes = crudos.map(function(arr){
+      return {
+        id: arr[0], codigo: arr[1], tipoPago: arr[2], estado: arr[3] || 'Disponible',
+        valor: Number(arr[4]) || 0, metros: arr[5], medida: arr[6],
+        lat: arr[7], lng: arr[8], fecha: arr[9], foto: arr[10], localidad: arr[11] || ''
+      };
+    });
+  } else {
+    // Formato objeto: {idLote, codigolote, tipopago, estado, valor, metros, medida, lat, lng, fecha, fotolote, localidad}
+    todosLotes = crudos.map(function(obj){
+      return {
+        id: obj.idLote || obj.IdLote || obj.id,
+        codigo: obj.codigolote || obj.codigo || '',
+        tipoPago: obj.tipopago || obj.tipoPago || '',
+        estado: obj.estado || 'Disponible',
+        valor: Number(obj.valor) || 0,
+        metros: obj.metros || '',
+        medida: obj.medida || '',
+        lat: obj.lat || '',
+        lng: obj.lng || '',
+        fecha: obj.fecha || '',
+        foto: obj.fotolote || obj.foto || '',
+        localidad: obj.localidad || obj.Localidad || ''
+      };
+    });
+  }
   renderLotes();
   toast(todosLotes.length + ' lotes cargados', 'ok');
 }
