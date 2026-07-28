@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agregar Lote — SimPréstamo</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* MAPA */
+        #mapa {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Botón confirmar ubicación */
+        .btn-confirmar {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: #00e5b0;
+            color: #07101e;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 24px rgba(0, 229, 176, 0.5);
+            display: none;
+        }
+        .btn-confirmar.visible {
+            display: block;
+        }
+
+        /* Indicador de coordenadas */
+        .coords-indicator {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.75);
+            color: #00e5b0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: none;
+        }
+        .coords-indicator.visible {
+            display: block;
+        }
+
+        /* POPUP FORMULARIO */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+        }
+        .overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .popup {
+            background: #102038;
+            border: 1px solid #1e3a58;
+            border-radius: 16px;
+            padding: 20px;
+            width: 90%;
+            max-width: 420px;
+            max-height: 85vh;
+            overflow-y: auto;
+            color: #a8c8e8;
+        }
+        .popup h2 {
+            color: #fff;
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 10px;
+        }
+        .campo label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #00e5b0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .campo input,
+        .campo select {
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid #1e3a58;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+            padding: 10px;
+            outline: none;
+            width: 100%;
+        }
+        .campo input:focus,
+        .campo select:focus {
+            border-color: #00e5b0;
+        }
+        .campo select {
+            background: #0c1d30;
+            appearance: none;
+            padding-right: 30px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300e5b0' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+        }
+        .campo select option {
+            background: #102038;
+            color: #fff;
+        }
+
+        .g2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .coords-box {
+            background: #0c1d30;
+            border: 1px solid #1e3a58;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            color: #00e5b0;
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+        }
+
+        /* FOTO */
+        .foto-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .foto-preview {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            border: 2px dashed #1e3a58;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #0c1d30;
+            flex-shrink: 0;
+            font-size: 28px;
+            opacity: 0.5;
+        }
+        .foto-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #00e5b0;
+            color: #07101e;
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+        }
+        .btn-primary:disabled {
+            opacity: 0.4;
+        }
+        .btn-foto {
+            background: #0f4c81;
+            color: #fff;
+            flex: 1;
+            padding: 10px;
+        }
+        .btn-cancel {
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid #1e3a58;
+            color: #a8c8e8;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .btn-accion {
+            background: #00e5b0;
+            color: #07101e;
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            margin-top: 6px;
+        }
+        .btn-accion.secundario {
+            background: rgba(255, 255, 255, .08);
+            color: #fff;
+            border: 1px solid #1e3a58;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 12px;
+            z-index: 9999;
+            background: #1e3a58;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 10px;
+            border-left: 3px solid #00e5b0;
+            font-size: 0.85rem;
+        }
+        .toast.err {
+            border-left-color: #ff4d6d;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MAPA -->
+    <div id="mapa"></div>
+
+    <!-- Indicador coordenadas -->
+    <div class="coords-indicator" id="coords-indicator"></div>
+
+    <!-- Botón confirmar -->
+    <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarUbicacion()">✅ Confirmar ubicación</button>
+
+    <!-- POPUP FORMULARIO -->
+    <div class="overlay" id="overlay-form">
+        <div class="popup">
+            <h2 id="popup-titulo">📋 Nuevo Lote</h2>
+
+            <div class="coords-box" id="popup-coords"></div>
+
+            <div class="g2">
+                <div class="campo">
+                    <label>Código *</label>
+                    <input type="text" id="lote-codigo" placeholder="L-001">
+                </div>
+                <div class="campo">
+                    <label>Tipo Pago</label>
+                    <select id="lote-tipopago">
+                        <option>Contado</option>
+                        <option>Crédito</option>
+                        <option>Financiamiento</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="g2">
+                <div class="campo">
+                    <label>Estado</label>
+                    <select id="lote-estado">
+                        <option>Disponible</option>
+                        <option>Apartado</option>
+                        <option>Vendido</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label>Valor ($)</label>
+                    <input type="number" id="lote-valor" placeholder="150000" min="0">
+                </div>
+            </div>
+
+            <div class="g2">
+                <div class="campo">
+                    <label>Metros</label>
+                    <input type="text" id="lote-metros" placeholder="120">
+                </div>
+                <div class="campo">
+                    <label>Medida</label>
+                    <input type="text" id="lote-medida" placeholder="10x12">
+                </div>
+            </div>
+
+            <div class="campo">
+                <label>Localidad</label>
+                <input type="text" id="lote-localidad" placeholder="San Quintín, BC">
+            </div>
+
+            <div class="campo">
+                <label>📸 Foto</label>
+                <div class="foto-row">
+                    <div class="foto-preview" id="foto-preview">🏞️</div>
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                        <button class="btn btn-foto" onclick="tomarFoto()">📷 Cámara</button>
+                        <button class="btn btn-foto" onclick="abrirGaleria()">🖼️ Galería</button>
+                    </div>
+                </div>
+                <input type="file" id="input-foto" accept="image/*">
+                <input type="file" id="input-galeria" accept="image/*">
+            </div>
+
+            <button class="btn btn-primary" id="btn-guardar" onclick="guardarLote()">💾 Guardar Lote</button>
+            <button class="btn btn-cancel" onclick="cerrarPopup()">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- POPUP POST-GUARDADO -->
+    <div class="overlay" id="overlay-post">
+        <div class="popup" style="text-align:center;">
+            <h2>✅ ¡Lote guardado!</h2>
+            <p style="margin:16px 0;color:#a8c8e8;">¿Qué deseas hacer?</p>
+            <button class="btn btn-accion" onclick="nuevoLote()">📍 Agregar otro lote</button>
+            <button class="btn btn-accion secundario" onclick="regresar()">↩ Regresar</button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbw83md07bzx1UmGRn51i-pRiuvQaEig_mUWS4VjvO0yTIlDCULqT8p3NGsSe2S4nZhzjA/exec';
+        const SAN_QUINTIN = [30.5600, -115.9400];
+
+        let mapa;
+        let marcadorLote = null;
+        let latSeleccionada = null;
+        let lngSeleccionada = null;
+        let fotoBase64 = null;
+        let loteEditando = null;
+
+        // ==================== INICIAR MAPA ====================
+        function initMapa() {
+            mapa = L.map('mapa', {
+                zoomControl: false,
+                attributionControl: false
+            });
+
+            // Capa satelital
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 20
+            }).addTo(mapa);
+
+            // Botones zoom personalizados
+            L.control.zoom({ position: 'bottomright' }).addTo(mapa);
+
+            // Obtener último lote o centrar en San Quintín
+            centrarUltimoLote();
+
+            // GPS
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    L.circleMarker([pos.coords.latitude, pos.coords.longitude], {
+                        radius: 7,
+                        color: '#00e5b0',
+                        fillColor: '#00e5b0',
+                        fillOpacity: 0.8
+                    }).addTo(mapa).bindPopup('📍 Tú').openPopup();
+                }, function() {}, { timeout: 6000 });
+            }
+
+            // Clic en mapa
+            mapa.on('click', function(e) {
+                colocarMarcador(e.latlng.lat, e.latlng.lng);
+                mostrarCoords(e.latlng.lat, e.latlng.lng);
+                document.getElementById('btn-confirmar').classList.add('visible');
+            });
+        }
+
+        function centrarUltimoLote() {
+            fetch(GAS_URL + '?tipo=lotes')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.lotes && data.data.lotes.length > 0) {
+                        var lotes = data.data.lotes;
+                        var ultimo = lotes[lotes.length - 1];
+                        var lat, lng;
+
+                        if (Array.isArray(ultimo)) {
+                            lat = parseFloat(ultimo[7]);
+                            lng = parseFloat(ultimo[8]);
+                        } else {
+                            lat = parseFloat(ultimo.lat);
+                            lng = parseFloat(ultimo.lng);
+                        }
+
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            mapa.setView([lat, lng], 17);
+                            L.marker([lat, lng]).addTo(mapa)
+                                .bindPopup('🏠 Último lote').openPopup();
+                            return;
+                        }
+                    }
+                    // Sin lotes: San Quintín
+                    mapa.setView(SAN_QUINTIN, 15);
+                })
+                .catch(() => {
+                    mapa.setView(SAN_QUINTIN, 15);
+                });
+        }
+
+        function colocarMarcador(lat, lng) {
+            if (marcadorLote) mapa.removeLayer(marcadorLote);
+            marcadorLote = L.marker([lat, lng], { draggable: true }).addTo(mapa);
+            latSeleccionada = lat;
+            lngSeleccionada = lng;
+
+            marcadorLote.on('dragend', function() {
+                var p = marcadorLote.getLatLng();
+                latSeleccionada = p.lat;
+                lngSeleccionada = p.lng;
+                mostrarCoords(p.lat, p.lng);
+            });
+        }
+
+        function mostrarCoords(lat, lng) {
+            var d = document.getElementById('coords-indicator');
+            d.textContent = '📍 ' + lat.toFixed(6) + ', ' + lng.toFixed(6);
+            d.classList.add('visible');
+        }
+
+        function confirmarUbicacion() {
+            document.getElementById('popup-coords').textContent =
+                '📍 ' + latSeleccionada.toFixed(6) + ', ' + lngSeleccionada.toFixed(6);
+            document.getElementById('overlay-form').classList.add('open');
+            document.getElementById('btn-confirmar').classList.remove('visible');
+        }
+
+        function cerrarPopup() {
+            document.getElementById('overlay-form').classList.remove('open');
+            document.getElementById('btn-confirmar').classList.add('visible');
+        }
+
+        // ==================== FOTO ====================
+        function tomarFoto() {
+            var inp = document.getElementById('input-foto');
+            inp.setAttribute('capture', 'environment');
+            inp.click();
+        }
+
+        function abrirGaleria() {
+            var inp = document.getElementById('input-galeria');
+            inp.removeAttribute('capture');
+            inp.click();
+        }
+
+        function procesarFoto(file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                fotoBase64 = e.target.result;
+                document.getElementById('foto-preview').innerHTML =
+                    '<img src="' + fotoBase64 + '" alt="Foto">';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.getElementById('input-foto').addEventListener('change', function() {
+            if (this.files[0]) procesarFoto(this.files[0]);
+        });
+        document.getElementById('input-galeria').addEventListener('change', function() {
+            if (this.files[0]) procesarFoto(this.files[0]);
+        });
+
+        // ==================== GUARDAR ====================
+        function guardarLote() {
+            var codigo = document.getElementById('lote-codigo').value.trim();
+            if (!codigo) {
+                toast('⚠️ Código obligatorio', 'err');
+                return;
+            }
+
+            var payload = {
+                _accion: 'upsert_lote',
+                codigolote: codigo,
+                tipopago: document.getElementById('lote-tipopago').value,
+                estado: document.getElementById('lote-estado').value,
+                valor: Number(document.getElementById('lote-valor').value) || 0,
+                metros: document.getElementById('lote-metros').value,
+                medida: document.getElementById('lote-medida').value,
+                lat: latSeleccionada,
+                lng: lngSeleccionada,
+                localidad: document.getElementById('lote-localidad').value,
+                fotolote: fotoBase64 || ''
+            };
+
+            if (loteEditando && loteEditando.id) payload.idLote = loteEditando.id;
+
+            var btn = document.getElementById('btn-guardar');
+            btn.disabled = true;
+            btn.textContent = '⏳ Guardando...';
+
+            fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                })
+                .then(r => r.json())
+                .then(data => {
+                    btn.disabled = false;
+                    btn.textContent = '💾 Guardar Lote';
+                    if (data.success) {
+                        document.getElementById('overlay-form').classList.remove('open');
+                        document.getElementById('overlay-post').classList.add('open');
+                    } else {
+                        toast('❌ Error al guardar', 'err');
+                    }
+                })
+                .catch(() => {
+                    btn.disabled = false;
+                    btn.textContent = '💾 Guardar Lote';
+                    toast('❌ Error de conexión', 'err');
+                });
+        }
+
+        function nuevoLote() {
+            document.getElementById('overlay-post').classList.remove('open');
+            limpiarFormulario();
+            document.getElementById('btn-confirmar').classList.remove('visible');
+            document.getElementById('coords-indicator').classList.remove('visible');
+            if (marcadorLote) {
+                mapa.removeLayer(marcadorLote);
+                marcadorLote = null;
+            }
+            latSeleccionada = null;
+            lngSeleccionada = null;
+            loteEditando = null;
+        }
+
+        function regresar() {
+            window.location.href = 'mapalotes.html';
+        }
+
+        function limpiarFormulario() {
+            ['lote-codigo', 'lote-metros', 'lote-medida', 'lote-localidad', 'lote-valor'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('lote-tipopago').value = 'Contado';
+            document.getElementById('lote-estado').value = 'Disponible';
+            fotoBase64 = null;
+            document.getElementById('foto-preview').innerHTML = '🏞️';
+        }
+
+        function toast(msg, tipo) {
+            var t = document.createElement('div');
+            t.className = 'toast' + (tipo === 'err' ? ' err' : '');
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        // ==================== CARGAR LOTE PARA EDITAR ====================
+        function cargarEdicion() {
+            var params = new URLSearchParams(window.location.search);
+            var id = params.get('id');
+            if (!id) return;
+
+            fetch(GAS_URL + '?tipo=lotes')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) return;
+                    var lotes = data.data.lotes;
+                    for (var i = 0; i < lotes.length; i++) {
+                        var l = lotes[i];
+                        var idLote = Array.isArray(l) ? l[0] : (l.idLote || l.IdLote || l.id);
+                        if (idLote == id) {
+                            loteEditando = Array.isArray(l) ? {
+                                id: l[0],
+                                codigo: l[1],
+                                tipoPago: l[2],
+                                estado: l[3],
+                                valor: l[4],
+                                metros: l[5],
+                                medida: l[6],
+                                lat: l[7],
+                                lng: l[8],
+                                foto: l[10],
+                                localidad: l[11]
+                            } : l;
+
+                            prellenarEdicion(loteEditando);
+                            break;
+                        }
+                    }
+                });
+        }
+
+        function prellenarEdicion(lote) {
+            document.getElementById('popup-titulo').textContent = '✏️ Editar Lote';
+            document.getElementById('lote-codigo').value = lote.codigo || '';
+            document.getElementById('lote-tipopago').value = lote.tipoPago || 'Contado';
+            document.getElementById('lote-estado').value = lote.estado || 'Disponible';
+            document.getElementById('lote-valor').value = lote.valor || '';
+            document.getElementById('lote-metros').value = lote.metros || '';
+            document.getElementById('lote-medida').value = lote.medida || '';
+            document.getElementById('lote-localidad').value = lote.localidad || '';
+
+            var lat = parseFloat(lote.lat);
+            var lng = parseFloat(lote.lng);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                colocarMarcador(lat, lng);
+                mostrarCoords(lat, lng);
+                document.getElementById('popup-coords').textContent =
+                    '📍 ' + lat.toFixed(6) + ', ' + lng.toFixed(6);
+                document.getElementById('overlay-form').classList.add('open');
+                mapa.setView([lat, lng], 17);
+            }
+
+            if (lote.foto) {
+                fotoBase64 = lote.foto;
+                document.getElementById('foto-preview').innerHTML =
+                    '<img src="' + fotoBase64 + '" alt="Foto">';
+            }
+        }
+
+        // ==================== INICIAR ====================
+        window.addEventListener('DOMContentLoaded', () => {
+            initMapa();
+            cargarEdicion();
+        });
+    </script>
+</body>
+</html>
